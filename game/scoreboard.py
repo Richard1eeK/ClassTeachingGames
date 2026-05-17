@@ -15,8 +15,8 @@ class Scoreboard:
         self.total = result["total"]
         self.ratio = self.score / max(1, self.total)
 
-        self.replay_btn = Button(SCREEN_W // 2 - 220, SCREEN_H - 120, 200, 60, "再玩一次", CANDY_GREEN, BLACK, 30)
-        self.quit_btn = Button(SCREEN_W // 2 + 20, SCREEN_H - 120, 200, 60, "退出游戏", CANDY_PINK, BLACK, 30)
+        self.replay_btn = Button(SCREEN_W // 2 - 220, SCREEN_H - 120, 200, 60, "Play Again", CANDY_GREEN, BLACK, 30)
+        self.quit_btn = Button(SCREEN_W // 2 + 20, SCREEN_H - 120, 200, 60, "Quit", CANDY_PINK, BLACK, 30)
 
     def run(self):
         while True:
@@ -41,7 +41,7 @@ class Scoreboard:
         self.screen.fill(BG_COLOR)
 
         title_font = get_font(44)
-        title = title_font.render("游戏结束!", True, CANDY_PURPLE)
+        title = title_font.render("Game Over!", True, CANDY_PURPLE)
         self.screen.blit(title, (SCREEN_W // 2 - title.get_width() // 2, 80))
 
         score_font = get_font(60)
@@ -77,15 +77,15 @@ class Scoreboard:
 
     def _get_encouragement(self):
         if self.ratio >= 0.9:
-            return "太厉害了！你是猜杯子大师！"
+            return "Amazing! You're a Shell Cup Master!"
         elif self.ratio >= 0.7:
-            return "非常棒！眼力很好哦！"
+            return "Great job! Sharp eyes!"
         elif self.ratio >= 0.5:
-            return "不错不错，继续加油！"
+            return "Not bad, keep it up!"
         elif self.ratio >= 0.3:
-            return "别灰心，多练习就会更好！"
+            return "Don't give up, practice makes perfect!"
         else:
-            return "加油！下次一定能猜对更多！"
+            return "Keep trying, you'll get better!"
 
     def _get_star_count(self):
         if self.ratio >= 0.9:

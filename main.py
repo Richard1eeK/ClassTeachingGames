@@ -12,7 +12,7 @@ from game.scoreboard import Scoreboard
 
 def main():
     pygame.init()
-    pygame.display.set_caption("猜杯子游戏 - Shell Game")
+    pygame.display.set_caption("Shell Cup Game")
     screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 
     while True:

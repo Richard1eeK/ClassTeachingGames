@@ -23,7 +23,6 @@ class Cup:
     def draw(self, surface, show_ball=False):
         cup_y = self.y - self.lift_offset
 
-        # 先画杯子
         top_w = int(self.width * 0.7)
         points = [
             (self.x - self.width // 2, cup_y + self.height),
@@ -47,12 +46,10 @@ class Cup:
         highlight_color = tuple(min(c + 60, 255) for c in self.color)
         pygame.draw.polygon(surface, highlight_color, highlight_points)
 
-        # 再画球（在杯子上层，杯子升起时球留在地面露出）
         if (show_ball or self.lifted) and self.ball_content is not None:
             self._draw_ball(surface)
 
     def _draw_ball(self, surface):
-        # 球始终留在地面位置，不跟随杯子升起
         ball_y = self.y + self.height - 30
         ball_radius = min(self.width // 3, 35)
         pygame.draw.circle(surface, WHITE, (self.x, ball_y), ball_radius)
