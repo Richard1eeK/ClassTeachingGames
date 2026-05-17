@@ -46,7 +46,7 @@ class ShellGame:
 
         for i in range(self.num_cups):
             x = start_x + i * spacing
-            cup = Cup(x, y, cup_w, cup_h, i)
+            cup = Cup(x, y, cup_w, cup_h)
             self.cups.append(cup)
 
     def _prepare_round(self):

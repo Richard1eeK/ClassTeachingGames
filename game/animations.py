@@ -1,5 +1,5 @@
 import pygame
-from game.ui_components import CUP_COLORS, WHITE, BLACK, DARK_GRAY, get_font
+from game.ui_components import CUP_COLOR, WHITE, BLACK, DARK_GRAY, get_font
 
 
 def ease_in_out(t):
@@ -7,12 +7,12 @@ def ease_in_out(t):
 
 
 class Cup:
-    def __init__(self, x, y, width, height, color_index=0):
+    def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.color = CUP_COLORS[color_index % len(CUP_COLORS)]
+        self.color = CUP_COLOR
         self.lifted = False
         self.lift_offset = 0
         self.target_x = x
@@ -23,10 +23,7 @@ class Cup:
     def draw(self, surface, show_ball=False):
         cup_y = self.y - self.lift_offset
 
-        if (show_ball or self.lifted) and self.ball_content is not None:
-            self._draw_ball(surface)
-
-        body_rect = pygame.Rect(self.x - self.width // 2, cup_y, self.width, self.height)
+        # 先画杯子
         top_w = int(self.width * 0.7)
         points = [
             (self.x - self.width // 2, cup_y + self.height),
@@ -50,9 +47,13 @@ class Cup:
         highlight_color = tuple(min(c + 60, 255) for c in self.color)
         pygame.draw.polygon(surface, highlight_color, highlight_points)
 
+        # 再画球（在杯子上层，杯子升起时球留在地面露出）
+        if (show_ball or self.lifted) and self.ball_content is not None:
+            self._draw_ball(surface)
+
     def _draw_ball(self, surface):
-        cup_y = self.y - self.lift_offset
-        ball_y = cup_y + self.height - 30
+        # 球始终留在地面位置，不跟随杯子升起
+        ball_y = self.y + self.height - 30
         ball_radius = min(self.width // 3, 35)
         pygame.draw.circle(surface, WHITE, (self.x, ball_y), ball_radius)
         pygame.draw.circle(surface, DARK_GRAY, (self.x, ball_y), ball_radius, 2)
