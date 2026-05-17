@@ -2,6 +2,7 @@ import pygame
 import random
 import os
 from game.animations import Cup, AnimationManager
+from game.icons import draw_check, draw_cross, draw_eye
 from game.ui_components import (
     get_font, Button,
     BG_COLOR, BLACK, WHITE, CANDY_GREEN, CANDY_PINK, CANDY_BLUE,
@@ -194,7 +195,15 @@ class ShellGame:
                 result_text = result_font.render("答对了! 太棒了!", True, CANDY_GREEN)
             else:
                 result_text = result_font.render("没猜对, 看看正确位置~", True, CANDY_PINK)
-            self.screen.blit(result_text, (SCREEN_W // 2 - result_text.get_width() // 2, 70))
+            tx = SCREEN_W // 2 - result_text.get_width() // 2
+            self.screen.blit(result_text, (tx, 70))
+            # 画图标
+            icon_x = tx - 35
+            icon_y = 70 + result_text.get_height() // 2
+            if self.result_correct:
+                draw_check(self.screen, icon_x, icon_y, 24, CANDY_GREEN)
+            else:
+                draw_cross(self.screen, icon_x, icon_y, 24, CANDY_PINK)
 
             if self.state == "result_shown" and self.next_btn:
                 self.next_btn.draw(self.screen)
@@ -202,7 +211,9 @@ class ShellGame:
         elif self.state == "showing":
             show_font = get_font(28)
             show_text = show_font.render("仔细看好目标在哪个杯子下面!", True, DARK_GRAY)
-            self.screen.blit(show_text, (SCREEN_W // 2 - show_text.get_width() // 2, 70))
+            tx = SCREEN_W // 2 - show_text.get_width() // 2
+            self.screen.blit(show_text, (tx, 70))
+            draw_eye(self.screen, tx - 25, 70 + show_text.get_height() // 2, 20, DARK_GRAY)
 
         # 绘制杯子
         for cup in self.cups:

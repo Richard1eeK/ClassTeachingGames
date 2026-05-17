@@ -1,4 +1,5 @@
 import pygame
+from game.icons import draw_star, draw_cross
 from game.ui_components import (
     Button, get_font,
     BG_COLOR, BLACK, CANDY_GREEN, CANDY_PINK, CANDY_BLUE,
@@ -62,10 +63,14 @@ class Scoreboard:
             color = CANDY_GREEN if self.ratio >= 0.7 else CANDY_YELLOW if self.ratio >= 0.4 else CANDY_PINK
             pygame.draw.rect(self.screen, color, (bar_x, bar_y, fill_w, bar_h), border_radius=15)
 
-        stars = self._get_stars()
-        star_font = get_font(50)
-        star_text = star_font.render(stars, True, CANDY_YELLOW)
-        self.screen.blit(star_text, (SCREEN_W // 2 - star_text.get_width() // 2, 460))
+        star_count = self._get_star_count()
+        star_size = 32
+        total_w = star_count * (star_size * 2 + 10) - 10
+        star_x = SCREEN_W // 2 - total_w // 2 + star_size
+        star_y = 475
+        color = CANDY_YELLOW if star_count > 0 else CANDY_PINK
+        for i in range(max(1, star_count)):
+            draw_star(self.screen, star_x + i * (star_size * 2 + 10), star_y, star_size, color)
 
         self.replay_btn.draw(self.screen)
         self.quit_btn.draw(self.screen)
@@ -82,12 +87,12 @@ class Scoreboard:
         else:
             return "加油！下次一定能猜对更多！"
 
-    def _get_stars(self):
+    def _get_star_count(self):
         if self.ratio >= 0.9:
-            return "⭐⭐⭐"
+            return 3
         elif self.ratio >= 0.7:
-            return "⭐⭐"
+            return 2
         elif self.ratio >= 0.4:
-            return "⭐"
+            return 1
         else:
-            return "💪"
+            return 0
