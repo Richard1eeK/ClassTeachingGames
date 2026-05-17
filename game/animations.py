@@ -117,6 +117,21 @@ class AnimationManager:
             "start_offsets": None,
         })
 
+    def add_scramble(self, cups, duration_ms):
+        """All cups shuffle to random positions simultaneously."""
+        import random
+        positions = [cup.x for cup in cups]
+        shuffled = positions[:]
+        random.shuffle(shuffled)
+        self.animations.append({
+            "type": "scramble",
+            "cups": cups,
+            "duration": duration_ms,
+            "elapsed": 0,
+            "start_positions": None,
+            "target_positions": shuffled,
+        })
+
     def add_pause(self, duration_ms):
         self.animations.append({
             "type": "pause",
@@ -148,6 +163,15 @@ class AnimationManager:
             cup_a.x = int(start_a + (start_b - start_a) * eased)
             cup_b.x = int(start_b + (start_a - start_b) * eased)
 
+        elif anim["type"] == "scramble":
+            cups = anim["cups"]
+            if anim["start_positions"] is None:
+                anim["start_positions"] = [cup.x for cup in cups]
+            starts = anim["start_positions"]
+            targets = anim["target_positions"]
+            for i, cup in enumerate(cups):
+                cup.x = int(starts[i] + (targets[i] - starts[i]) * eased)
+
         elif anim["type"] == "lift":
             for cup in anim["cups"]:
                 cup.lift_offset = int(anim["lift_amount"] * eased)
@@ -170,6 +194,11 @@ class AnimationManager:
                 cup_b = anim["cup_b"]
                 cup_a.x = anim["start_b"]
                 cup_b.x = anim["start_a"]
+            elif anim["type"] == "scramble":
+                cups = anim["cups"]
+                targets = anim["target_positions"]
+                for i, cup in enumerate(cups):
+                    cup.x = targets[i]
             self.animations.pop(0)
 
     @property

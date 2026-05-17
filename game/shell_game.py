@@ -18,6 +18,7 @@ class ShellGame:
         self.num_cups = settings["num_cups"]
         self.num_rounds = settings["num_rounds"]
         self.swap_duration = settings["swap_duration"]
+        self.speed_level = settings.get("speed_level", 2)
         self.items = settings["items"]
 
         self.cups = []
@@ -87,16 +88,42 @@ class ShellGame:
         # 动画：先全部升起展示球的位置，然后放下，然后交换
         self.state = "showing"
         self.anim = AnimationManager()
-        self.anim.add_lift(self.cups, 400, 140)
-        self.anim.add_pause(1200)
-        self.anim.add_lower(self.cups, 400)
-        self.anim.add_pause(300)
 
-        num_swaps = self.num_cups + random.randint(2, 5)
-        for _ in range(num_swaps):
-            a, b = random.sample(range(self.num_cups), 2)
-            self.anim.add_swap(self.cups[a], self.cups[b], self.swap_duration)
-            self.anim.add_pause(80)
+        if self.speed_level >= 5:
+            # 疯狂模式：极快展示 + 全部杯子同时乱窜
+            self.anim.add_lift(self.cups, 250, 140)
+            self.anim.add_pause(600)
+            self.anim.add_lower(self.cups, 250)
+            self.anim.add_pause(120)
+
+            num_scrambles = self.num_cups * 3 + random.randint(5, 10)
+            for _ in range(num_scrambles):
+                self.anim.add_scramble(self.cups, self.swap_duration)
+                self.anim.add_pause(25)
+        elif self.speed_level >= 4:
+            # 超快模式：快速展示 + 更多交换
+            self.anim.add_lift(self.cups, 300, 140)
+            self.anim.add_pause(800)
+            self.anim.add_lower(self.cups, 300)
+            self.anim.add_pause(200)
+
+            num_swaps = self.num_cups * 2 + random.randint(3, 7)
+            for _ in range(num_swaps):
+                a, b = random.sample(range(self.num_cups), 2)
+                self.anim.add_swap(self.cups[a], self.cups[b], self.swap_duration)
+                self.anim.add_pause(50)
+        else:
+            # 普通模式
+            self.anim.add_lift(self.cups, 400, 140)
+            self.anim.add_pause(1200)
+            self.anim.add_lower(self.cups, 400)
+            self.anim.add_pause(300)
+
+            num_swaps = self.num_cups + random.randint(2, 5)
+            for _ in range(num_swaps):
+                a, b = random.sample(range(self.num_cups), 2)
+                self.anim.add_swap(self.cups[a], self.cups[b], self.swap_duration)
+                self.anim.add_pause(80)
 
     def run(self):
         running = True

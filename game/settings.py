@@ -17,7 +17,7 @@ class SettingsScreen:
 
         self.cup_slider = Slider(100, 180, 300, 3, 7, 3, "杯子数量", 1)
         self.round_slider = Slider(100, 280, 300, 3, 20, 5, "游戏轮数", 1)
-        self.speed_slider = Slider(100, 380, 300, 1, 3, 2, "交换速度", 1)
+        self.speed_slider = Slider(100, 380, 300, 1, 5, 2, "交换速度", 1)
 
         self.mode_manual = Button(100, 460, 180, 50, "手动输入", CANDY_GREEN)
         self.mode_bank = Button(300, 460, 180, 50, "题库加载", CANDY_PURPLE)
@@ -32,7 +32,7 @@ class SettingsScreen:
 
         self.start_btn = Button(SCREEN_W // 2 - 100, SCREEN_H - 90, 200, 60, "开始游戏!", CANDY_PINK, BLACK, 32)
 
-        self.speed_labels = {1: "慢", 2: "中", 3: "快"}
+        self.speed_labels = {1: "慢", 2: "中", 3: "快", 4: "超快", 5: "疯狂"}
 
     def _scan_banks(self):
         banks = []
@@ -213,11 +213,13 @@ class SettingsScreen:
         else:
             items = self.manual_items
 
-        speed_map = {1: 1200, 2: 800, 3: 500}
+        speed_map = {1: 1200, 2: 800, 3: 500, 4: 280, 5: 150}
+        speed_level = self.speed_slider.value
 
         return {
             "num_cups": self.cup_slider.value,
             "num_rounds": self.round_slider.value,
-            "swap_duration": speed_map.get(self.speed_slider.value, 800),
+            "swap_duration": speed_map.get(speed_level, 800),
+            "speed_level": speed_level,
             "items": items,
         }
