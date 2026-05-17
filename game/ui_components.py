@@ -23,18 +23,38 @@ SCREEN_H = 768
 
 def get_font(size, bold=False):
     font_paths = [
+        # Windows
+        "C:/Windows/Fonts/msyh.ttc",
+        "C:/Windows/Fonts/msyhbd.ttc",
+        "C:/Windows/Fonts/simhei.ttf",
+        "C:/Windows/Fonts/simsun.ttc",
+        "C:/Windows/Fonts/dengxian.ttf",
+        "C:/Windows/Fonts/STKAITI.TTF",
+        # macOS
         "/System/Library/Fonts/PingFang.ttc",
         "/System/Library/Fonts/STHeiti Light.ttc",
         "/System/Library/Fonts/Hiragino Sans GB.ttc",
-        "C:/Windows/Fonts/msyh.ttc",
-        "C:/Windows/Fonts/simhei.ttf",
+        # Linux
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
     ]
+    bundled = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "fonts", "font.ttf")
+    if os.path.exists(bundled):
+        font_paths.insert(0, bundled)
+
     for path in font_paths:
         if os.path.exists(path):
             try:
                 return pygame.font.Font(path, size)
             except:
                 continue
+    try:
+        for name in ["microsoftyahei", "simhei", "simsun", "dengxian", "pingfang"]:
+            font = pygame.font.SysFont(name, size)
+            if font:
+                return font
+    except:
+        pass
     return pygame.font.Font(None, size)
 
 

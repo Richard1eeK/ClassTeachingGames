@@ -48,7 +48,7 @@ class SettingsScreen:
 
     def _get_data_dir(self):
         if getattr(sys, 'frozen', False):
-            return os.path.join(os.path.dirname(sys.executable), "data")
+            return os.path.join(sys._MEIPASS, "data")
         return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 
     def run(self):
@@ -118,7 +118,7 @@ class SettingsScreen:
             self.text_input.update(dt)
 
         can_start = True
-        if self.input_mode == "manual" and len(self.manual_items) < self.cup_slider.value:
+        if self.input_mode == "manual" and len(self.manual_items) < 1:
             can_start = False
         self.start_btn.enabled = can_start
 
@@ -161,9 +161,8 @@ class SettingsScreen:
                 item_text = items_font.render(f"  {i+1}. {display}", True, DARK_GRAY)
                 self.screen.blit(item_text, (100, y_offset + i * 28))
 
-            need = max(0, self.cup_slider.value - len(self.manual_items))
-            if need > 0:
-                hint = items_font.render(f"还需添加 {need} 项内容", True, CANDY_PINK)
+            if len(self.manual_items) < 1:
+                hint = items_font.render("请至少添加 1 项内容（每轮随机选一个作为目标）", True, CANDY_PINK)
                 self.screen.blit(hint, (100, y_offset + min(len(self.manual_items), 6) * 28 + 5))
 
         elif self.input_mode == "bank":

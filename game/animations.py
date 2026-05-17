@@ -1,5 +1,4 @@
 import pygame
-import math
 from game.ui_components import CUP_COLORS, WHITE, BLACK, DARK_GRAY, get_font
 
 
@@ -24,7 +23,7 @@ class Cup:
     def draw(self, surface, show_ball=False):
         cup_y = self.y - self.lift_offset
 
-        if show_ball or self.lifted:
+        if (show_ball or self.lifted) and self.ball_content is not None:
             self._draw_ball(surface)
 
         body_rect = pygame.Rect(self.x - self.width // 2, cup_y, self.width, self.height)
@@ -52,7 +51,8 @@ class Cup:
         pygame.draw.polygon(surface, highlight_color, highlight_points)
 
     def _draw_ball(self, surface):
-        ball_y = self.y + self.height - 30
+        cup_y = self.y - self.lift_offset
+        ball_y = cup_y + self.height - 30
         ball_radius = min(self.width // 3, 35)
         pygame.draw.circle(surface, WHITE, (self.x, ball_y), ball_radius)
         pygame.draw.circle(surface, DARK_GRAY, (self.x, ball_y), ball_radius, 2)
@@ -92,8 +92,9 @@ class AnimationManager:
             "cup_b": cup_b,
             "duration": duration_ms,
             "elapsed": 0,
-            "start_a": cup_a.x,
-            "start_b": cup_b.x,
+            "start_a": None,
+            "start_b": None,
+            "initialized": False,
         })
 
     def add_lift(self, cups, duration_ms=400, lift_amount=120):
@@ -112,6 +113,7 @@ class AnimationManager:
             "cups": cups,
             "duration": duration_ms,
             "elapsed": 0,
+            "start_offsets": None,
         })
 
     def add_pause(self, duration_ms):
@@ -136,6 +138,10 @@ class AnimationManager:
         if anim["type"] == "swap":
             cup_a = anim["cup_a"]
             cup_b = anim["cup_b"]
+            if not anim["initialized"]:
+                anim["start_a"] = cup_a.x
+                anim["start_b"] = cup_b.x
+                anim["initialized"] = True
             start_a = anim["start_a"]
             start_b = anim["start_b"]
             cup_a.x = int(start_a + (start_b - start_a) * eased)
@@ -148,9 +154,11 @@ class AnimationManager:
                     cup.lifted = True
 
         elif anim["type"] == "lower":
-            for cup in anim["cups"]:
-                start_offset = cup.lift_offset if anim["elapsed"] == dt else cup.lift_offset
-                cup.lift_offset = int(cup.lift_offset * (1 - eased)) if t < 1.0 else 0
+            if anim["start_offsets"] is None:
+                anim["start_offsets"] = [cup.lift_offset for cup in anim["cups"]]
+            for i, cup in enumerate(anim["cups"]):
+                start_off = anim["start_offsets"][i]
+                cup.lift_offset = int(start_off * (1 - eased)) if t < 1.0 else 0
                 if t >= 1.0:
                     cup.lifted = False
                     cup.lift_offset = 0
