@@ -31,6 +31,7 @@ class ShellGame:
         self.result_timer = 0
         self.show_result = False
         self.result_correct = False
+        self.next_btn = None
 
         self._setup_cups()
         self._prepare_round()
@@ -129,24 +130,36 @@ class ShellGame:
                         self.score += 1
                     self.state = "revealing"
                     self.anim = AnimationManager()
-                    # 先升起目标杯（展示正确答案）
                     self.anim.add_lift([self.target_cup], 350, 140)
                     if not self.result_correct:
-                        # 答错了再升起玩家选的杯（展示它是空的）
                         self.anim.add_pause(400)
                         self.anim.add_lift([cup], 350, 140)
                     self.anim.add_pause(1800)
                     break
 
+        elif self.state == "result_shown":
+            if self.next_btn and self.next_btn.is_clicked(pos, True):
+                self.current_round += 1
+                self._prepare_round()
+
     def _update(self, dt):
         self.anim.update(dt)
+        mouse_pos = pygame.mouse.get_pos()
+        if self.next_btn:
+            self.next_btn.update(mouse_pos)
 
         if self.state == "showing" and self.anim.done:
             self.state = "guessing"
 
         elif self.state == "revealing" and self.anim.done:
-            self.current_round += 1
-            self._prepare_round()
+            # 揭晓完成后等待玩家点击按钮
+            self.state = "result_shown"
+            is_last = self.current_round + 1 >= self.num_rounds
+            btn_text = "查看结果" if is_last else "下一轮"
+            self.next_btn = Button(
+                SCREEN_W // 2 - 100, SCREEN_H - 80, 200, 55,
+                btn_text, CANDY_GREEN, BLACK, 28
+            )
 
     def _draw(self):
         self.screen.fill(BG_COLOR)
@@ -172,24 +185,27 @@ class ShellGame:
             self.screen.blit(prompt_surf, (SCREEN_W // 2 - prompt_surf.get_width() // 2, 70))
 
             hint_font = get_font(22)
-            hint = hint_font.render("👆 点击你认为藏着目标的杯子", True, DARK_GRAY)
+            hint = hint_font.render("点击你认为藏着目标的杯子", True, DARK_GRAY)
             self.screen.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, SCREEN_H - 60))
 
-        elif self.state == "revealing":
+        elif self.state in ("revealing", "result_shown"):
             result_font = get_font(38)
             if self.result_correct:
-                result_text = result_font.render("✓ 答对了！太棒了！", True, CANDY_GREEN)
+                result_text = result_font.render("答对了! 太棒了!", True, CANDY_GREEN)
             else:
-                result_text = result_font.render("✗ 没猜对，红色框标记的是正确答案~", True, CANDY_PINK)
+                result_text = result_font.render("没猜对, 看看正确位置~", True, CANDY_PINK)
             self.screen.blit(result_text, (SCREEN_W // 2 - result_text.get_width() // 2, 70))
+
+            if self.state == "result_shown" and self.next_btn:
+                self.next_btn.draw(self.screen)
 
         elif self.state == "showing":
             show_font = get_font(28)
-            show_text = show_font.render("👀 仔细看好目标在哪个杯子下面！", True, DARK_GRAY)
+            show_text = show_font.render("仔细看好目标在哪个杯子下面!", True, DARK_GRAY)
             self.screen.blit(show_text, (SCREEN_W // 2 - show_text.get_width() // 2, 70))
 
-        # 绘制杯子：showing 阶段升起状态下显示球；revealing 阶段升起状态下显示球
+        # 绘制杯子
         for cup in self.cups:
             show = (self.state == "showing" and cup.lifted) or \
-                   (self.state == "revealing" and cup.lifted)
+                   (self.state in ("revealing", "result_shown") and cup.lifted)
             cup.draw(self.screen, show_ball=show)

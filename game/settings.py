@@ -21,7 +21,7 @@ class SettingsScreen:
 
         self.mode_manual = Button(100, 460, 180, 50, "手动输入", CANDY_GREEN)
         self.mode_bank = Button(300, 460, 180, 50, "题库加载", CANDY_PURPLE)
-        self.input_mode = "bank"
+        self.input_mode = "manual"
 
         self.manual_items = []
         self.text_input = TextInput(100, 540, 350, 45, "输入文字后按回车添加")
@@ -37,11 +37,9 @@ class SettingsScreen:
     def _scan_banks(self):
         banks = []
         data_dir = self._get_data_dir()
-        if os.path.exists(os.path.join(data_dir, "default_bank.json")):
-            banks.append(("默认题库 (字母+单词)", os.path.join(data_dir, "default_bank.json")))
         custom_dir = os.path.join(data_dir, "custom")
         if os.path.exists(custom_dir):
-            for f in os.listdir(custom_dir):
+            for f in sorted(os.listdir(custom_dir)):
                 if f.endswith(".json"):
                     banks.append((f.replace(".json", ""), os.path.join(custom_dir, f)))
         return banks
@@ -120,13 +118,15 @@ class SettingsScreen:
         can_start = True
         if self.input_mode == "manual" and len(self.manual_items) < 1:
             can_start = False
+        if self.input_mode == "bank" and not self.bank_files:
+            can_start = False
         self.start_btn.enabled = can_start
 
     def _draw(self):
         self.screen.fill(BG_COLOR)
 
         title_font = get_font(40, bold=True)
-        title = title_font.render("🎮 猜杯子游戏 - 设置", True, BLACK)
+        title = title_font.render("猜杯子游戏 - 设置", True, BLACK)
         self.screen.blit(title, (SCREEN_W // 2 - title.get_width() // 2, 30))
 
         self.cup_slider.draw(self.screen)
@@ -167,13 +167,37 @@ class SettingsScreen:
 
         elif self.input_mode == "bank":
             bank_font = get_font(22)
-            for i, (name, path) in enumerate(self.bank_files):
-                btn_rect = pygame.Rect(100, 540 + i * 45, 400, 40)
-                color = CANDY_BLUE if i == self.selected_bank else WHITE
-                pygame.draw.rect(self.screen, color, btn_rect, border_radius=8)
-                pygame.draw.rect(self.screen, DARK_GRAY, btn_rect, 1, border_radius=8)
-                text = bank_font.render(f"  {'✓ ' if i == self.selected_bank else '  '}{name}", True, BLACK)
-                self.screen.blit(text, (btn_rect.x + 10, btn_rect.centery - text.get_height() // 2))
+            if self.bank_files:
+                y = 540
+                for i, (name, path) in enumerate(self.bank_files):
+                    btn_rect = pygame.Rect(100, y + i * 45, 400, 40)
+                    color = CANDY_BLUE if i == self.selected_bank else WHITE
+                    pygame.draw.rect(self.screen, color, btn_rect, border_radius=8)
+                    pygame.draw.rect(self.screen, DARK_GRAY, btn_rect, 1, border_radius=8)
+                    text = bank_font.render(f"  {'> ' if i == self.selected_bank else '  '}{name}", True, BLACK)
+                    self.screen.blit(text, (btn_rect.x + 10, btn_rect.centery - text.get_height() // 2))
+
+                help_font = get_font(18)
+                help_texts = [
+                    "JSON 格式: [{\"type\":\"text\",\"content\":\"A\",\"hint\":\"字母A\"}]",
+                    "type: text 或 image, content: 内容, hint: 提示(可选)",
+                    "题库文件放入 data/custom/ 文件夹即可",
+                ]
+                for j, t in enumerate(help_texts):
+                    hs = help_font.render(t, True, DARK_GRAY)
+                    self.screen.blit(hs, (100, y + len(self.bank_files) * 45 + 20 + j * 22))
+            else:
+                no_bank = bank_font.render("(暂无题库文件)", True, GRAY)
+                self.screen.blit(no_bank, (100, 550))
+                help_font = get_font(18)
+                help_texts = [
+                    "题库需为 JSON 文件，放入 data/custom/ 文件夹",
+                    "格式示例: [{\"type\":\"text\",\"content\":\"A\",\"hint\":\"字母A\"}]",
+                    "每轮会从题库中随机选一个作为目标",
+                ]
+                for j, t in enumerate(help_texts):
+                    hs = help_font.render(t, True, DARK_GRAY)
+                    self.screen.blit(hs, (100, 590 + j * 22))
 
         self.start_btn.draw(self.screen)
 

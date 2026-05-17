@@ -40,7 +40,7 @@ class Scoreboard:
         self.screen.fill(BG_COLOR)
 
         title_font = get_font(44)
-        title = title_font.render("🎉 游戏结束！", True, CANDY_PURPLE)
+        title = title_font.render("游戏结束!", True, CANDY_PURPLE)
         self.screen.blit(title, (SCREEN_W // 2 - title.get_width() // 2, 80))
 
         score_font = get_font(60)
