@@ -3,7 +3,7 @@ import math
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
-from game.icons import draw_star, draw_cross, draw_replay, draw_door
+from game.icons import draw_star, draw_cross, draw_replay, draw_door, draw_gear
 from game.animations import ease_out_back, ease_out_elastic
 from game.effects import EffectsManager
 from game.decorations import (
@@ -24,10 +24,21 @@ class Scoreboard:
         self.total = result["total"]
         self.ratio = self.score / max(1, self.total)
 
-        self.replay_btn = Button(SCREEN_W // 2 - 230, SCREEN_H - 110, 210, 64,
-                                 "Play Again", T.SV_GREEN, T.TEXT_LIGHT,
+        # Three buttons: Same Again (replay) / Adjust Settings / Quit
+        btn_w = 230
+        btn_h = 64
+        gap = 20
+        total_w = btn_w * 3 + gap * 2
+        start_x = SCREEN_W // 2 - total_w // 2
+        btn_y = SCREEN_H - 110
+
+        self.replay_btn = Button(start_x, btn_y, btn_w, btn_h,
+                                 "Same Again", T.SV_BLUE, T.TEXT_LIGHT,
                                  T.FONT_HEADING, icon=draw_replay)
-        self.quit_btn = Button(SCREEN_W // 2 + 20, SCREEN_H - 110, 210, 64,
+        self.adjust_btn = Button(start_x + btn_w + gap, btn_y, btn_w, btn_h,
+                                 "Adjust", T.SV_GREEN, T.TEXT_LIGHT,
+                                 T.FONT_HEADING, icon=draw_gear)
+        self.quit_btn = Button(start_x + (btn_w + gap) * 2, btn_y, btn_w, btn_h,
                                "Quit", T.SV_RED, T.TEXT_LIGHT,
                                T.FONT_HEADING, icon=draw_door)
 
@@ -57,6 +68,7 @@ class Scoreboard:
             self.elapsed += dt
             mouse_pos = pygame.mouse.get_pos()
             self.replay_btn.update(mouse_pos, dt)
+            self.adjust_btn.update(mouse_pos, dt)
             self.quit_btn.update(mouse_pos, dt)
             self.effects.update(dt)
             update_floating_decorations(self.decorations, dt)
@@ -67,6 +79,8 @@ class Scoreboard:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.replay_btn.is_clicked(event.pos, True):
                         return "replay"
+                    if self.adjust_btn.is_clicked(event.pos, True):
+                        return "adjust"
                     if self.quit_btn.is_clicked(event.pos, True):
                         return "quit"
 
@@ -110,6 +124,7 @@ class Scoreboard:
         self.effects.draw(self.screen)
 
         self.replay_btn.draw(self.screen)
+        self.adjust_btn.draw(self.screen)
         self.quit_btn.draw(self.screen)
 
     def _draw_score(self, card_rect):

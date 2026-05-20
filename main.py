@@ -15,11 +15,19 @@ def main():
     pygame.display.set_caption("Shell Cup Game")
     screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 
+    last_settings = None
+    skip_settings = False  # set true to skip Settings screen and reuse last_settings
+
     while True:
-        settings_screen = SettingsScreen(screen)
-        settings = settings_screen.run()
-        if settings is None:
-            break
+        if skip_settings and last_settings is not None:
+            settings = last_settings
+            skip_settings = False
+        else:
+            settings_screen = SettingsScreen(screen, initial_settings=last_settings)
+            settings = settings_screen.run()
+            if settings is None:
+                break
+            last_settings = settings
 
         game = ShellGame(screen, settings)
         result = game.run()
@@ -30,6 +38,10 @@ def main():
         action = scoreboard.run()
         if action == "quit":
             break
+        elif action == "replay":
+            # Skip Settings, go straight back into ShellGame with same config
+            skip_settings = True
+        # action == "adjust": fall through and re-show Settings with last_settings
 
     pygame.quit()
     sys.exit()

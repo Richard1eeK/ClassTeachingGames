@@ -229,3 +229,20 @@ def draw_plus(surface, x, y, size, color=(135, 180, 90)):
     lw = max(3, size // 4)
     pygame.draw.line(surface, color, (x, y - size), (x, y + size), lw)
     pygame.draw.line(surface, color, (x - size, y), (x + size, y), lw)
+
+
+def draw_gear(surface, x, y, size, color=(75, 55, 40)):
+    """Gear / settings icon — for Adjust button."""
+    teeth = 8
+    outer = size
+    inner = int(size * 0.6)
+    pts = []
+    for i in range(teeth * 2):
+        r = outer if i % 2 == 0 else inner
+        angle = i * math.pi / teeth - math.pi / 2
+        pts.append((x + r * math.cos(angle), y + r * math.sin(angle)))
+    pygame.draw.polygon(surface, color, pts)
+    # center hole
+    hole_r = max(3, size // 3)
+    pygame.draw.circle(surface, (255, 248, 230), (x, y), hole_r)
+    pygame.draw.circle(surface, color, (x, y), hole_r, 2)

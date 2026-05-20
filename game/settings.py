@@ -28,20 +28,27 @@ SPEED_ICONS = [
 
 
 class SettingsScreen:
-    def __init__(self, screen):
+    def __init__(self, screen, initial_settings=None):
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.running = True
         self.quit_requested = False
 
+        # Read defaults from initial_settings (preserve previous round's choices)
+        init = initial_settings or {}
+        init_cups = init.get("num_cups", 3)
+        init_rounds = init.get("num_rounds", 5)
+        init_speed = init.get("speed_level", 2)
+        init_items = list(init.get("items", []))
+
         # Left card: Cups / Rounds / Speed
         self.left_card = Card(60, 150, 460, 540, title="Game Settings")
         self.cup_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 100,
-                                 self.left_card.rect.width - 80, 3, 7, 3, "Cups")
+                                 self.left_card.rect.width - 80, 3, 7, init_cups, "Cups")
         self.round_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 200,
-                                   self.left_card.rect.width - 80, 3, 20, 5, "Rounds")
+                                   self.left_card.rect.width - 80, 3, 20, init_rounds, "Rounds")
         self.speed_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 320,
-                                   self.left_card.rect.width - 80, 1, 5, 2, "Speed")
+                                   self.left_card.rect.width - 80, 1, 5, init_speed, "Speed")
 
         # Right card: content
         self.right_card = Card(SCREEN_W - 520, 150, 460, 540, title="Your Items")
@@ -55,7 +62,7 @@ class SettingsScreen:
             icon=draw_image_icon,
         )
 
-        self.manual_items = []
+        self.manual_items = init_items
         self.scroll_offset = 0
         self._delete_btn_rects = []  # tuples of (rect, item_index)
 
