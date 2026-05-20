@@ -1,0 +1,107 @@
+# 项目状态 - PROJECT_STATE
+
+> 最后更新：2026-05-20
+
+## 当前版本
+
+**最新 tag**：`v1.3` — 题库保留 + 中途调难度
+
+**部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
+
+**仓库**：https://github.com/Richard1eeK/ClassTeachingGames
+
+## 已完成功能
+
+### 核心玩法（v1.0-stardew 之前已具备）
+- 杯子洗牌 + 点击猜中游戏
+- 5 档速度（Slow / Medium / Fast / Ultra / Insane）
+- 3-7 个杯子可选
+- 3-20 回合可选
+- 题目内容：手动输入文字 + tkinter 文件选择器加载图片
+- 每回合从 items 里随机抽一个作为目标
+- 答对加分、错答展示正确杯子
+- 结算页：分数、星星评级、鼓励语
+
+### 视觉与交互（v1.0-stardew）
+- 星露谷木质 + 羊皮纸 + 暖色调主题
+- 三屏完整重做（设置 / 游戏 / 结算）
+- 木板背景 + 漂浮装饰物（橡子 / 四叶草 / 麦穗）
+- 杯子地面阴影 + 答对金色光环
+- 答对粒子爆炸 + `+1 ⭐` 浮字
+- 答错杯子摇晃 + 屏幕震动
+- 速度滑块 5 档手绘图标（蜗牛 / 兔子 / 闪电 / 火焰 / 旋风）
+- 文字带描边（`render_text_outlined`）保持像素插画感
+- 删除了 "Load Bank" 模式，简化为只手动输入
+
+### Bug 修复（v1.1）
+- 设置界面点 X 退出会莫名启动一轮的 bug——加 `quit_requested` 标志位区分
+
+### 新功能（v1.2）
+- 游戏中 **Exit 按钮**（HUD 右端红色小木牌）：任意 state 可点退出，跳到 Scoreboard 显示当前分数
+  - `result_shown` 时点 Exit 会把当前回合算进 total，避免 `1/0` 这种诡异比例
+- **目标球放大展示 + 弧线飞入**：每回合开头杯子先抬起 → 中央放大目标球（2.8x）配 `Memorize this!` 字样停留 2 秒 → 球沿弧线飞入目标杯子并缩到正常大小 → 杯子盖下 → 开始洗牌
+  - 解决了图片目标在杯子里太小看不清的痛点
+  - IntroBall 类支持文字 / 图片，文字过长自动缩字号
+
+### 流程优化（v1.3）
+- **Scoreboard 改 3 按钮**：`Same Again`（同题同难度直接重玩，跳过设置页）/ `Adjust`（回设置页保留题目和滑块值）/ `Quit`
+- `SettingsScreen.__init__` 接收 `initial_settings` 参数预填滑块和题目列表
+- `main.py` 主循环维护 `last_settings` 跨场景复用
+- 新增齿轮图标 `draw_gear` 用于 Adjust 按钮
+- 老师中途想换难度不用再重新录题；想直接重玩也只需一个点击
+
+## 当前项目状态
+
+- **代码工作目录干净**：所有改动已 push
+- **macOS 验证**：headless smoke test 全过；视觉验证因 Python 3.14 的 pygame 没有 font 模块所以**没在真实窗口跑过**——所有验证都是用临时 venv 装 pygame-ce + SDL_VIDEODRIVER=dummy 做的
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测
+- **当前阻塞**：无
+
+## 未完成 / 待确认
+
+### 用户提出的视觉痛点（**待方向决策**）
+用户反馈"界面太丑太简陋"。已分析根因（纯几何绘制无真实素材）并给出 3 条改进路径，**等用户选定方向**：
+- A. 真正的像素艺术风（接近真星露谷）—— 需要 sprite 素材
+- B. 加真实纹理（PNG 贴在几何形状上）—— 需要 5-10 张木纹/纸纹 PNG，**作者推荐**
+- C. 几何风极致 polish —— 不加素材，天花板低
+
+### 已搁置的功能
+- **音效系统**：`assets/sounds/` 目录已存在但是空的；用户当时表示"一会再讨论"，至今未启用
+  - `build.bat` 还**没加** `--add-data "assets;assets"`，加音效前必须先补
+  - 如果走 B/A 视觉路径，资源打包问题需要一起解决（assets 整体打进 exe）
+- **题库 JSON 加载**：v1.0 重做时删除了 "Load Bank" 模式，目前只有手动输入。`data/custom/` 目录还在，约定格式 `[{"type": "text"|"image", "content": str, "hint": str}]`，等用户决定是否重新引入（可能改成自动扫描 + UI 选择）
+- **更多游戏**：项目命名是复数 `ClassTeachingGames`，未来可能加新游戏
+
+### 已知行为问题（**非 bug，但可能体验不佳**）
+- 用户曾问 "为什么中途结束没回到主页"——这是误解。Scoreboard 上的 `Quit` 关闭程序，`Same Again`/`Adjust` 才回流程。已通过 v1.3 改名解决（v1.0~v1.2 时按钮叫 `Play Again`，语义有歧义）
+- Scoreboard 在 `result_shown` 时 Exit 会把那一题算进 total，但 `0/0` 边界（首回合 intro 期间 Exit）Scoreboard 显示 `0/0`，依赖 `max(1, total)` 保护——视觉上没问题，但 `0/0` 仍会触发 0 颗星的灰色显示
+
+## 下次继续从这里开始
+
+**主线**：等用户对"界面美化方向"决策。
+
+**如果选 B（推荐方向）**：
+1. 列出"购物清单"——需要哪些纹理 PNG（木纹、羊皮纸、陶器、星空 / 田野背景等）
+2. 让用户从 itch.io / opengameart.org / Kenney.nl 找 CC0 素材或 AI 生成
+3. 改造 `game/decorations.py` 用纹理 blit 替代纯几何
+4. 同步把 `assets` 目录纳入 PyInstaller 打包（`build.bat` 改 `--add-data`）
+5. 顺便把音效系统也接进来（同一次打包改动）
+
+**如果选 A**：
+1. 重画整套 sprite（杯子、按钮、卡片、装饰物）
+2. 改 `game/animations.py` 的 `Cup.draw` 用 sprite 替代多边形
+3. 工作量大，可能要 2-3 个迭代
+
+**如果选 C**：
+1. 微调当前几何参数（圆角更柔和、阴影更深、配色更饱和）
+2. 加更细的纹理叠加（程序生成柏林噪声当作木纹）
+3. 不引入素材，但天花板有限
+
+## 版本回滚速查
+
+```bash
+git reset --hard v1.3          # 题库保留 + 中途调难度
+git reset --hard v1.2          # Exit 按钮 + 目标球展示
+git reset --hard v1.1          # 修复 X 退出 bug
+git reset --hard v1.0-stardew  # 星露谷重做完成版
+```

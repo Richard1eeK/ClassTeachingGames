@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 文档索引
+
+项目长期规则在本文件；阶段性状态和决策走 `docs/` 子目录：
+
+- **CLAUDE.md（本文件）**：长期有效的运行方式、技术栈、目录结构、代码风格、禁止事项、用户协作偏好
+- **`docs/PROJECT_STATE.md`**：当前完成度、未完成项、下一步候选方向
+- **`docs/DECISIONS.md`**：技术决策记录，含选定方案的"为什么"以及落选方案
+- **`docs/CHANGELOG_AI.md`**：AI 修改日志（每个版本改了什么文件、跑了什么验证、留了什么坑）
+
+新会话开始前读 `docs/PROJECT_STATE.md` 是最快的进入方式。
+
 ## 基本规则
 
 - **使用中文回复**，除非代码、变量名、命令等需要保留英文
@@ -76,23 +87,30 @@ ClassTeachingGames/
 
 ### 1. 三段式主循环（`main.py`）
 
-`SettingsScreen → ShellGame → Scoreboard → 回到 SettingsScreen`，每段是独立的类，自己持有 `pygame.Clock` 和事件循环，通过 `run()` 返回值传递状态：
-- `SettingsScreen.run()` → `settings dict` 或 `None`（退出）
+`SettingsScreen → ShellGame → Scoreboard → 回到 SettingsScreen 或 ShellGame`，每段是独立的类，自己持有 `pygame.Clock` 和事件循环，通过 `run()` 返回值传递状态：
+- `SettingsScreen.run()` → `settings dict` 或 `None`（X 退出）
 - `ShellGame.run()` → `{score, total, quit}`
-- `Scoreboard.run()` → `"replay"` 或 `"quit"`
+- `Scoreboard.run()` → `"replay"` / `"adjust"` / `"quit"`
 
-**加新场景照这个模式做**：自己的 `run()`、自己的事件循环、自己的 `pygame.display.flip()`。**禁止**在场景之间共享可变状态，所有数据通过返回的 dict 传。
+**v1.3 新增**：`main.py` 维护 `last_settings` 和 `skip_settings` 标志，根据 Scoreboard 返回值决定流向：
+- `replay`（Same Again）→ 跳过 SettingsScreen，直接用 `last_settings` 重新进 ShellGame
+- `adjust`（Adjust Settings）→ 进 SettingsScreen 但带入 `last_settings` 预填滑块和题目
+- `quit` → 关闭程序
+
+**加新场景照这个模式做**：自己的 `run()`、自己的事件循环、自己的 `pygame.display.flip()`。**禁止**在场景之间共享可变状态，所有数据通过返回的 dict 传。`SettingsScreen.__init__` 接受 `initial_settings` 参数支持预填。
 
 ### 2. ShellGame 状态机
 
 ```
-init → showing → guessing → revealing → result_shown → (next round) showing ...
-                                                     → (last round) finished
+init → intro → showing → guessing → revealing → result_shown → (next round) intro ...
+                                                              → (last round) finished
 ```
 
 切换由两个东西触发：
-1. `AnimationManager.done`——动画队列空了就推进（`showing → guessing`，`revealing → result_shown`）
-2. 鼠标点击——`guessing` 阶段点杯子触发 `revealing`，`result_shown` 阶段点 Next 按钮触发下一回合
+1. `AnimationManager.done`——动画队列空了就推进（`intro → showing`，`showing → guessing`，`revealing → result_shown`）
+2. 鼠标点击——`guessing` 阶段点杯子触发 `revealing`，`result_shown` 阶段点 Next 按钮触发下一回合，**任意非 finished state 点 Exit 触发 `finished`**
+
+`intro` 阶段会展示放大目标球（IntroBall），让用户看清内容后球弧线飞入目标杯子，然后才进入正常的洗牌阶段（`showing`）。
 
 **加新交互前必须检查当前 `state`**，否则会出现"动画还没播完用户就能点"的 bug。
 
@@ -179,3 +197,23 @@ init → showing → guessing → revealing → result_shown → (next round) sh
 - **音效系统**：`assets/sounds/` 是空的，`build.bat` 也还没加 `--add-data "assets;assets"`，待加
 - **题库 JSON 加载**：今天已删除"Load Bank"模式，目前只有手动输入。题库格式仍约定为 `[{"type": "text"|"image", "content": str, "hint": str}]`，等用户决定如何重新引入（可能改成自动扫 `data/custom/` 下的 JSON）
 - **更多游戏**：项目命名是复数 `ClassTeachingGames`，未来加新游戏建议在 `game/` 下开新模块 + `main.py` 前加游戏选择菜单
+- **视觉美化方向待决**：用户提过"界面太简陋"，等他在像素艺术 / 真实纹理 PNG / 几何风极致 polish 三条路径中选定。详见 `docs/PROJECT_STATE.md`
+
+## 用户协作偏好
+
+整理自多次会话的稳定模式：
+
+- **决策风格**：用户在不确定时倾向选"推荐方案"，喜欢 AI 给出明确推荐 + 候选对比 + 推荐理由。不要把决策完全推回去。
+- **测试基准**：用户的测试方式是"Windows 端 build.bat → 跑 exe → 看真实窗口"。Mac 端的 headless smoke test 只是 AI 自己的内部验证，**不能替代**用户实测。每次推 push 后用户会去 Windows 端实测。
+- **回滚意识**：用户重视回滚能力——重要 milestone 都打 git tag（`v1.0-stardew` / `v1.1` / `v1.2` / `v1.3`），tag 注释里要写明"回滚命令: git reset --hard vX.Y"。后续重要功能继续打 tag。
+- **节奏**：单次会话内连续做多个版本（v1.0 → v1.1 → v1.2 → v1.3）是用户接受的，不要为了"显得精细"而拆得过散。但**收尾时需要主动整理 docs**——这是用户已经形成的习惯。
+- **推送默认开**：改完代码默认假设要 `git push`，不要每次问"要推吗"——除非是探索性的实验改动。
+- **Plan-first 适用范围**：大改动用户喜欢"先出 Plan 我看看确认后再操作"。小 bug 修复直接动手即可，不要为简单事 over-plan。
+- **输出风格**：用户偏好简洁、直接、有结构的回复。每次回复开头加 emoji，结尾加 `Your Honour`（这是项目级 CLAUDE.md 已有的规则）。
+
+## 版本管理约定
+
+- **打 tag 时机**：每个有用户感知的功能完成 / 修复完成后打 annotated tag
+- **tag 命名**：`v<主版本>.<次版本>` 或带语义后缀如 `v1.0-stardew`
+- **tag 注释模板**：列出"新功能"列表 + "回滚命令: git reset --hard <tag>" + "基准版本: <上一个 tag>"
+- **commit message**：中文，第一行简短主题（< 50 字），空行后详细列表，结尾保留 `Co-Authored-By: Claude Opus 4.7 (1M context)` 行
