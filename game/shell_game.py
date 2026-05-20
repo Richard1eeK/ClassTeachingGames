@@ -3,8 +3,8 @@ import random
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
-from game.animations import Cup, AnimationManager
-from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_heart
+from game.animations import Cup, AnimationManager, IntroBall
+from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_heart, draw_door
 from game.effects import EffectsManager
 from game.decorations import (
     get_wood_background, draw_parchment_card, draw_wood_plank,
@@ -36,10 +36,19 @@ class ShellGame:
         self.target_cup = None
         self.target_content = None
         self.target_hint = ""
+        self.target_type = "text"
         self.selected_cup = None
         self.show_result = False
         self.result_correct = False
         self.next_btn = None
+        self.intro_ball = None
+        self.intro_active = False  # True while showing/flying the big ball
+
+        # HUD Exit button (placed during _draw_hud now needs Button object for clicks)
+        self.exit_btn = Button(
+            SCREEN_W - 130, 26, 100, 40,
+            "Exit", T.SV_RED, T.TEXT_LIGHT, T.FONT_CAPTION, icon=draw_door,
+        )
 
         # Background floats and bubble bob
         self.decorations = make_floating_decorations(12, SCREEN_W, SCREEN_H, seed=23)
@@ -76,48 +85,66 @@ class ShellGame:
 
         self.target_content = target_item["content"]
         self.target_hint = target_item.get("hint", "")
+        self.target_type = target_item["type"]
 
         target_idx = random.randint(0, self.num_cups - 1)
         self.target_cup = self.cups[target_idx]
         self.target_cup.ball_type = target_item["type"]
+        loaded_image = None
         if target_item["type"] == "image":
             try:
                 img = pygame.image.load(target_item["content"])
                 self.target_cup.ball_content = img
+                loaded_image = img
             except Exception:
                 self.target_cup.ball_type = "text"
                 self.target_cup.ball_content = target_item["content"]
+                self.target_type = "text"
         else:
             self.target_cup.ball_content = target_item["content"]
 
-        self.state = "showing"
+        self.state = "intro"
+        self.intro_active = True
         self.anim = AnimationManager()
         self.next_btn = None
 
+        # Build the intro ball
+        ball_radius = min(self.target_cup.width // 3, 35)
+        intro_content = loaded_image if self.target_type == "image" else self.target_content
+        self.intro_ball = IntroBall(
+            x=SCREEN_W // 2,
+            y=SCREEN_H // 2 - 60,
+            base_radius=ball_radius,
+            content=intro_content,
+            content_type=self.target_type,
+        )
+        self.intro_ball.scale = 2.8
+        self.intro_ball.alpha = 0.0
+        self.intro_ball.visible = False
+
+        # Phase 1: lift cups so empty bottoms show, then show big ball
+        self.anim.add_lift(self.cups, 300, 140)
+        self.anim.add_intro_show(self.intro_ball, duration_ms=2000, fade_in_ms=400)
+        # Phase 2: fly ball into target cup, then lower cups
+        self.anim.add_intro_fly(self.intro_ball, self.target_cup, duration_ms=850,
+                                end_scale=1.0, arc_height=160)
+        self.anim.add_pause(150)
+        self.anim.add_lower(self.cups, 320)
+        self.anim.add_pause(250)
+
+        # Phase 3: original showing/swap sequence (unchanged behavior)
         if self.speed_level >= 5:
-            self.anim.add_lift(self.cups, 250, 140)
-            self.anim.add_pause(600)
-            self.anim.add_lower(self.cups, 250)
-            self.anim.add_pause(120)
             num_scrambles = self.num_cups * 3 + random.randint(5, 10)
             for _ in range(num_scrambles):
                 self.anim.add_scramble(self.cups, self.swap_duration)
                 self.anim.add_pause(25)
         elif self.speed_level >= 4:
-            self.anim.add_lift(self.cups, 300, 140)
-            self.anim.add_pause(800)
-            self.anim.add_lower(self.cups, 300)
-            self.anim.add_pause(200)
             num_swaps = self.num_cups * 2 + random.randint(3, 7)
             for _ in range(num_swaps):
                 a, b = random.sample(range(self.num_cups), 2)
                 self.anim.add_swap(self.cups[a], self.cups[b], self.swap_duration)
                 self.anim.add_pause(50)
         else:
-            self.anim.add_lift(self.cups, 400, 140)
-            self.anim.add_pause(1200)
-            self.anim.add_lower(self.cups, 400)
-            self.anim.add_pause(300)
             num_swaps = self.num_cups + random.randint(2, 5)
             for _ in range(num_swaps):
                 a, b = random.sample(range(self.num_cups), 2)
@@ -140,11 +167,25 @@ class ShellGame:
             pygame.display.flip()
 
             if self.state == "finished":
-                return {"score": self.score, "total": self.num_rounds, "quit": False}
+                # 'finished' can be reached either by completing all rounds
+                # or by clicking Exit mid-game; current_round reflects how
+                # many rounds were actually completed.
+                completed = self.current_round
+                if completed >= self.num_rounds:
+                    completed = self.num_rounds
+                return {"score": self.score, "total": completed, "quit": False}
 
         return {"score": self.score, "total": self.current_round, "quit": True}
 
     def _handle_click(self, pos):
+        # Exit button is reachable from any active state
+        if self.state != "finished" and self.exit_btn.is_clicked(pos, True):
+            # If the user was on the result screen, count that round as completed.
+            if self.state == "result_shown":
+                self.current_round += 1
+            self.state = "finished"
+            return
+
         if self.state == "guessing":
             for cup in self.cups:
                 cup_rect = pygame.Rect(
@@ -189,10 +230,14 @@ class ShellGame:
         self.bubble_phase += dt * 0.003
 
         mouse_pos = pygame.mouse.get_pos()
+        self.exit_btn.update(mouse_pos, dt)
         if self.next_btn:
             self.next_btn.update(mouse_pos, dt)
 
-        if self.state == "showing" and self.anim.done:
+        if self.state == "intro" and self.anim.done:
+            self.state = "showing"
+            self.intro_active = False
+        elif self.state == "showing" and self.anim.done:
             self.state = "guessing"
 
         elif self.state == "revealing" and self.anim.done:
@@ -216,12 +261,34 @@ class ShellGame:
         self._draw_hud(layer)
         self._draw_status(layer)
         self._draw_cups(layer)
+
+        # Intro overlay: dim background + draw the big ball above cups
+        if self.state == "intro" and self.intro_ball is not None:
+            overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            overlay.fill((30, 18, 10, 120))
+            layer.blit(overlay, (0, 0))
+            # "Memorize this!" caption while ball is held large at center
+            if self.intro_ball.scale > 1.4:
+                cap = render_text_outlined(
+                    "Memorize this!", T.FONT_HEADING, T.GOLD_LIGHT,
+                    outline_color=T.WOOD_DARK, outline_w=2, bold=True,
+                )
+                cap.set_alpha(int(255 * self.intro_ball.alpha))
+                layer.blit(cap, (
+                    SCREEN_W // 2 - cap.get_width() // 2,
+                    SCREEN_H // 2 - 60 - int(self.intro_ball.base_radius * self.intro_ball.scale) - 50,
+                ))
+            self.intro_ball.draw(layer)
+
         self.effects.draw(layer)
 
         self.screen.blit(layer, (sx, sy))
 
         if self.state == "result_shown" and self.next_btn:
             self.next_btn.draw(self.screen)
+
+        # Exit button is always on top, untouched by screen shake
+        self.exit_btn.draw(self.screen)
 
     def _draw_hud(self, surface):
         # Top wood plank with round + score
@@ -249,17 +316,22 @@ class ShellGame:
             pygame.draw.circle(surface, outline, (dot_x, dot_y), dot_r, 2)
             dot_x += dot_r * 2 + 6
 
-        # Score (right)
+        # Score (right) — leave room for Exit button at far right
         score_text = render_text_outlined(
             f"Score: {self.score}", T.FONT_BODY, T.TEXT_LIGHT,
             outline_color=T.WOOD_DARK, outline_w=2, bold=True,
         )
-        score_x = bar.right - score_text.get_width() - 50
+        score_x = bar.right - score_text.get_width() - 180
         surface.blit(score_text, (score_x, bar.centery - score_text.get_height() // 2))
         # star icon to right of score
-        draw_star(surface, bar.right - 28, bar.centery, 14, T.GOLD, outline=T.WOOD_DARK)
+        draw_star(surface, score_x + score_text.get_width() + 18, bar.centery,
+                  14, T.GOLD, outline=T.WOOD_DARK)
 
     def _draw_status(self, surface):
+        # During intro, the big ball + caption take center stage; skip bubble
+        if self.state == "intro":
+            return
+
         # Speech bubble for status, bobbing slightly
         import math
         bob = int(math.sin(self.bubble_phase) * 3)

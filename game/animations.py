@@ -147,6 +147,63 @@ class Cup:
                 surface.blit(scaled, img_rect)
 
 
+class IntroBall:
+    """A standalone ball used for the round-intro show + fly-in animation."""
+
+    def __init__(self, x, y, base_radius, content, content_type):
+        self.x = x
+        self.y = y
+        self.base_radius = base_radius  # final size when seated in cup
+        self.scale = 2.8                # current scale relative to base_radius
+        self.content = content
+        self.content_type = content_type
+        self.alpha = 0.0                # 0..1
+        self.visible = False
+
+    def draw(self, surface):
+        if not self.visible or self.alpha <= 0.01:
+            return
+        radius = int(self.base_radius * self.scale)
+        if radius < 2:
+            return
+        ball_surf = pygame.Surface((radius * 4, radius * 4), pygame.SRCALPHA)
+        cx = cy = radius * 2
+
+        # shadow
+        shadow = pygame.Surface((radius * 3, radius), pygame.SRCALPHA)
+        pygame.draw.ellipse(shadow, (40, 25, 15, 90),
+                            (0, 0, radius * 3, radius))
+        ball_surf.blit(shadow, (cx - radius * 3 // 2, cy + radius // 2))
+
+        pygame.draw.circle(ball_surf, T.PARCHMENT, (cx, cy), radius)
+        pygame.draw.circle(ball_surf, T.GOLD_DARK, (cx, cy), radius, max(3, radius // 14))
+        pygame.draw.circle(ball_surf, T.GOLD, (cx, cy), radius - max(3, radius // 14), 2)
+
+        if self.content is not None:
+            if self.content_type == "text":
+                font_size = max(20, int(radius * 1.0))
+                font = get_font(font_size, bold=True)
+                text_surf = font.render(str(self.content), True, T.TEXT_DARK)
+                # auto-shrink if too wide
+                while text_surf.get_width() > radius * 1.7 and font_size > 14:
+                    font_size = int(font_size * 0.85)
+                    font = get_font(font_size, bold=True)
+                    text_surf = font.render(str(self.content), True, T.TEXT_DARK)
+                trect = text_surf.get_rect(center=(cx, cy))
+                ball_surf.blit(text_surf, trect)
+            elif self.content_type == "image" and isinstance(self.content, pygame.Surface):
+                img = self.content
+                max_size = int(radius * 1.7)
+                iw, ih = img.get_size()
+                s = min(max_size / iw, max_size / ih)
+                scaled = pygame.transform.smoothscale(img, (int(iw * s), int(ih * s)))
+                irect = scaled.get_rect(center=(cx, cy))
+                ball_surf.blit(scaled, irect)
+
+        ball_surf.set_alpha(int(255 * max(0.0, min(1.0, self.alpha))))
+        surface.blit(ball_surf, (int(self.x) - radius * 2, int(self.y) - radius * 2))
+
+
 class AnimationManager:
     def __init__(self):
         self.animations = []
@@ -225,6 +282,34 @@ class AnimationManager:
             "peak": peak,
         })
 
+    def add_intro_show(self, intro_ball, duration_ms=2000, fade_in_ms=350,
+                       fade_out_ms=0):
+        """Show intro_ball at center: fade in, hold at scale, optional fade out."""
+        self.animations.append({
+            "type": "intro_show",
+            "ball": intro_ball,
+            "duration": duration_ms,
+            "elapsed": 0,
+            "fade_in": fade_in_ms,
+            "fade_out": fade_out_ms,
+        })
+
+    def add_intro_fly(self, intro_ball, target_cup, duration_ms=800,
+                      end_scale=1.0, arc_height=140):
+        """Fly intro_ball along an arc into target_cup, scaling to end_scale."""
+        self.animations.append({
+            "type": "intro_fly",
+            "ball": intro_ball,
+            "target_cup": target_cup,
+            "duration": duration_ms,
+            "elapsed": 0,
+            "start_x": None,
+            "start_y": None,
+            "start_scale": None,
+            "end_scale": end_scale,
+            "arc_height": arc_height,
+        })
+
     def update(self, dt):
         if not self.animations:
             self.is_animating = False
@@ -287,6 +372,47 @@ class AnimationManager:
             cup.glow = anim["peak"] * math.sin(t * math.pi)
             if t >= 1.0:
                 cup.glow = 0.0
+
+        elif anim["type"] == "intro_show":
+            ball = anim["ball"]
+            ball.visible = True
+            elapsed = anim["elapsed"]
+            fade_in = anim["fade_in"]
+            fade_out = anim["fade_out"]
+            duration = anim["duration"]
+            if fade_in > 0 and elapsed < fade_in:
+                ball.alpha = elapsed / fade_in
+            elif fade_out > 0 and elapsed > duration - fade_out:
+                ball.alpha = max(0.0, (duration - elapsed) / fade_out)
+            else:
+                ball.alpha = 1.0
+
+        elif anim["type"] == "intro_fly":
+            ball = anim["ball"]
+            target = anim["target_cup"]
+            if anim["start_x"] is None:
+                anim["start_x"] = ball.x
+                anim["start_y"] = ball.y
+                anim["start_scale"] = ball.scale
+            sx = anim["start_x"]
+            sy = anim["start_y"]
+            ss = anim["start_scale"]
+            # target = center of where the ball sits inside the cup
+            tx = target.x
+            ty = target.y + target.height - 30
+            # linear interp x; parabolic arc on y
+            ball.x = sx + (tx - sx) * eased
+            base_y = sy + (ty - sy) * eased
+            arc = -math.sin(t * math.pi) * anim["arc_height"]
+            ball.y = base_y + arc
+            ball.scale = ss + (anim["end_scale"] - ss) * eased
+            ball.visible = True
+            ball.alpha = 1.0
+            if t >= 1.0:
+                ball.x = tx
+                ball.y = ty
+                ball.scale = anim["end_scale"]
+                ball.visible = False
 
         if t >= 1.0:
             if anim["type"] == "swap":
