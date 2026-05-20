@@ -32,6 +32,7 @@ class SettingsScreen:
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.running = True
+        self.quit_requested = False
 
         # Left card: Cups / Rounds / Speed
         self.left_card = Card(60, 150, 460, 540, title="Game Settings")
@@ -77,13 +78,16 @@ class SettingsScreen:
             self._draw()
             pygame.display.flip()
 
+        if self.quit_requested:
+            return None
         return self._get_settings()
 
     def _handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.quit_requested = True
                 self.running = False
-                return None
+                return
 
             self.cup_slider.handle_event(event)
             self.round_slider.handle_event(event)
