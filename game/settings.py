@@ -1,12 +1,30 @@
 import pygame
-import json
 import os
-import sys
+
+from game import theme as T
+from game.theme import SCREEN_W, SCREEN_H
 from game.ui_components import (
-    Button, Slider, TextInput, get_font,
-    BG_COLOR, BLACK, WHITE, CANDY_BLUE, CANDY_GREEN, CANDY_PINK,
-    CANDY_PURPLE, CANDY_YELLOW, CANDY_ORANGE, GRAY, DARK_GRAY, SCREEN_W, SCREEN_H
+    Button, Slider, TextInput, Card, WoodSign,
+    get_font, render_text_outlined,
 )
+from game.decorations import (
+    get_wood_background, draw_parchment_card, draw_wood_plank,
+    make_floating_decorations, update_floating_decorations,
+    draw_floating_decorations,
+)
+from game.icons import (
+    draw_snail, draw_rabbit, draw_lightning, draw_flame, draw_tornado,
+    draw_image_icon, draw_text_icon, draw_trash, draw_plus,
+)
+
+
+SPEED_ICONS = [
+    (1, "Slow", draw_snail, T.WOOD_BROWN),
+    (2, "Medium", draw_rabbit, T.WOOD_BROWN),
+    (3, "Fast", draw_lightning, T.GOLD_DARK),
+    (4, "Ultra", draw_flame, T.SV_RED),
+    (5, "Insane", draw_tornado, T.SV_PURPLE),
+]
 
 
 class SettingsScreen:
@@ -15,39 +33,41 @@ class SettingsScreen:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.cup_slider = Slider(100, 180, 300, 3, 7, 3, "Cups", 1)
-        self.round_slider = Slider(100, 280, 300, 3, 20, 5, "Rounds", 1)
-        self.speed_slider = Slider(100, 380, 300, 1, 5, 2, "Speed", 1)
+        # Left card: Cups / Rounds / Speed
+        self.left_card = Card(60, 150, 460, 540, title="Game Settings")
+        self.cup_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 100,
+                                 self.left_card.rect.width - 80, 3, 7, 3, "Cups")
+        self.round_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 200,
+                                   self.left_card.rect.width - 80, 3, 20, 5, "Rounds")
+        self.speed_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 320,
+                                   self.left_card.rect.width - 80, 1, 5, 2, "Speed")
 
-        self.mode_manual = Button(100, 460, 180, 50, "Manual Input", CANDY_GREEN)
-        self.mode_bank = Button(300, 460, 180, 50, "Load Bank", CANDY_PURPLE)
-        self.input_mode = "manual"
+        # Right card: content
+        self.right_card = Card(SCREEN_W - 520, 150, 460, 540, title="Your Items")
+        self.text_input = TextInput(
+            self.right_card.rect.x + 30, self.right_card.rect.y + 80,
+            self.right_card.rect.width - 180, 50, "Type a word and press Enter"
+        )
+        self.add_image_btn = Button(
+            self.right_card.rect.right - 130, self.right_card.rect.y + 80,
+            110, 50, "Image", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_BODY,
+            icon=draw_image_icon,
+        )
 
         self.manual_items = []
-        self.text_input = TextInput(100, 540, 350, 45, "Type and press Enter to add")
-        self.add_image_btn = Button(460, 540, 120, 45, "Add Image", CANDY_ORANGE)
+        self.scroll_offset = 0
+        self._delete_btn_rects = []  # tuples of (rect, item_index)
 
-        self.bank_files = self._scan_banks()
-        self.selected_bank = 0
+        # Hanging title sign
+        self.title_sign = WoodSign(SCREEN_W // 2 - 280, 50, 560, 80,
+                                   "Shell Cup Game", font_size=T.FONT_TITLE)
 
-        self.start_btn = Button(SCREEN_W // 2 - 100, SCREEN_H - 90, 200, 60, "Start Game!", CANDY_PINK, BLACK, 32)
+        self.start_btn = Button(SCREEN_W // 2 - 130, SCREEN_H - 80, 260, 60,
+                                "Start Game!", T.SV_GREEN, T.TEXT_LIGHT, T.FONT_HEADING)
 
-        self.speed_labels = {1: "Slow", 2: "Medium", 3: "Fast", 4: "Ultra Fast", 5: "Insane"}
+        self.decorations = make_floating_decorations(16, SCREEN_W, SCREEN_H, seed=11)
 
-    def _scan_banks(self):
-        banks = []
-        data_dir = self._get_data_dir()
-        custom_dir = os.path.join(data_dir, "custom")
-        if os.path.exists(custom_dir):
-            for f in sorted(os.listdir(custom_dir)):
-                if f.endswith(".json"):
-                    banks.append((f.replace(".json", ""), os.path.join(custom_dir, f)))
-        return banks
-
-    def _get_data_dir(self):
-        if getattr(sys, 'frozen', False):
-            return os.path.join(sys._MEIPASS, "data")
-        return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+        self.speed_labels = {1: "Slow", 2: "Medium", 3: "Fast", 4: "Ultra", 5: "Insane"}
 
     def run(self):
         while self.running:
@@ -69,27 +89,33 @@ class SettingsScreen:
             self.round_slider.handle_event(event)
             self.speed_slider.handle_event(event)
 
-            if self.input_mode == "manual":
-                result = self.text_input.handle_event(event)
-                if result == "enter" and self.text_input.text.strip():
-                    self.manual_items.append({"type": "text", "content": self.text_input.text.strip(), "hint": ""})
-                    self.text_input.text = ""
+            result = self.text_input.handle_event(event)
+            if result == "enter" and self.text_input.text.strip():
+                self.manual_items.append({
+                    "type": "text",
+                    "content": self.text_input.text.strip(),
+                    "hint": "",
+                })
+                self.text_input.text = ""
+
+            if event.type == pygame.MOUSEWHEEL:
+                self.scroll_offset = max(0, self.scroll_offset - event.y * 30)
+                max_scroll = max(0, len(self.manual_items) * 48 - 320)
+                self.scroll_offset = min(self.scroll_offset, max_scroll)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
-                if self.mode_manual.is_clicked(pos, True):
-                    self.input_mode = "manual"
-                elif self.mode_bank.is_clicked(pos, True):
-                    self.input_mode = "bank"
-                elif self.start_btn.is_clicked(pos, True):
+                if self.start_btn.is_clicked(pos, True):
                     self.running = False
-                elif self.input_mode == "manual" and self.add_image_btn.is_clicked(pos, True):
+                elif self.add_image_btn.is_clicked(pos, True):
                     self._add_image()
-                elif self.input_mode == "bank" and self.bank_files:
-                    for i, (name, path) in enumerate(self.bank_files):
-                        btn_rect = pygame.Rect(100, 540 + i * 45, 400, 40)
-                        if btn_rect.collidepoint(pos):
-                            self.selected_bank = i
+                else:
+                    # delete buttons in items list
+                    for rect, idx in self._delete_btn_rects:
+                        if rect.collidepoint(pos):
+                            if 0 <= idx < len(self.manual_items):
+                                self.manual_items.pop(idx)
+                            break
 
     def _add_image(self):
         try:
@@ -102,117 +128,162 @@ class SettingsScreen:
             )
             root.destroy()
             if file_path:
-                self.manual_items.append({"type": "image", "content": file_path, "hint": ""})
-        except:
+                self.manual_items.append({
+                    "type": "image",
+                    "content": file_path,
+                    "hint": "",
+                })
+        except Exception:
             pass
 
     def _update(self, dt):
         mouse_pos = pygame.mouse.get_pos()
-        self.mode_manual.update(mouse_pos)
-        self.mode_bank.update(mouse_pos)
-        self.start_btn.update(mouse_pos)
-        self.add_image_btn.update(mouse_pos)
-        if self.input_mode == "manual":
-            self.text_input.update(dt)
+        self.start_btn.update(mouse_pos, dt)
+        self.add_image_btn.update(mouse_pos, dt)
+        self.text_input.update(dt)
+        update_floating_decorations(self.decorations, dt)
 
-        can_start = True
-        if self.input_mode == "manual" and len(self.manual_items) < 1:
-            can_start = False
-        if self.input_mode == "bank" and not self.bank_files:
-            can_start = False
+        can_start = len(self.manual_items) >= 1
         self.start_btn.enabled = can_start
 
     def _draw(self):
-        self.screen.fill(BG_COLOR)
+        bg = get_wood_background(SCREEN_W, SCREEN_H)
+        self.screen.blit(bg, (0, 0))
+        draw_floating_decorations(self.screen, self.decorations, SCREEN_W, SCREEN_H)
 
-        title_font = get_font(40, bold=True)
-        title = title_font.render("Shell Cup Game - Settings", True, BLACK)
-        self.screen.blit(title, (SCREEN_W // 2 - title.get_width() // 2, 30))
+        self.title_sign.draw(self.screen)
 
+        # === Left card: settings ===
+        self.left_card.draw(self.screen)
         self.cup_slider.draw(self.screen)
+        # render slider labels in dark text on parchment instead of light text
+        self._draw_slider_label(self.cup_slider, f"Cups: {self.cup_slider.value}")
         self.round_slider.draw(self.screen)
-
-        speed_font = get_font(24)
-        speed_text = speed_font.render(
-            f"Speed: {self.speed_labels.get(self.speed_slider.value, 'Medium')}",
-            True, BLACK
-        )
-        self.screen.blit(speed_text, (100, self.speed_slider.y - 30))
-        self.speed_slider.label = f"Speed ({self.speed_labels.get(self.speed_slider.value, 'Medium')})"
+        self._draw_slider_label(self.round_slider, f"Rounds: {self.round_slider.value}")
         self.speed_slider.draw(self.screen)
+        self._draw_slider_label(
+            self.speed_slider,
+            f"Speed: {self.speed_labels.get(self.speed_slider.value, 'Medium')}"
+        )
 
-        mode_font = get_font(24)
-        mode_text = mode_font.render("Content Source:", True, BLACK)
-        self.screen.blit(mode_text, (100, 435))
+        # speed icons row (under slider)
+        self._draw_speed_icons()
 
-        self.mode_manual.color = CANDY_GREEN if self.input_mode == "manual" else GRAY
-        self.mode_bank.color = CANDY_PURPLE if self.input_mode == "bank" else GRAY
-        self.mode_manual.draw(self.screen)
-        self.mode_bank.draw(self.screen)
-
-        if self.input_mode == "manual":
-            self.text_input.draw(self.screen)
-            self.add_image_btn.draw(self.screen)
-
-            items_font = get_font(20)
-            y_offset = 600
-            for i, item in enumerate(self.manual_items[-6:]):
-                display = item["content"] if item["type"] == "text" else f"[Image] {os.path.basename(item['content'])}"
-                item_text = items_font.render(f"  {i+1}. {display}", True, DARK_GRAY)
-                self.screen.blit(item_text, (100, y_offset + i * 28))
-
-            if len(self.manual_items) < 1:
-                hint = items_font.render("Add at least 1 item (one picked per round)", True, CANDY_PINK)
-                self.screen.blit(hint, (100, y_offset + min(len(self.manual_items), 6) * 28 + 5))
-
-        elif self.input_mode == "bank":
-            bank_font = get_font(22)
-            if self.bank_files:
-                y = 540
-                for i, (name, path) in enumerate(self.bank_files):
-                    btn_rect = pygame.Rect(100, y + i * 45, 400, 40)
-                    color = CANDY_BLUE if i == self.selected_bank else WHITE
-                    pygame.draw.rect(self.screen, color, btn_rect, border_radius=8)
-                    pygame.draw.rect(self.screen, DARK_GRAY, btn_rect, 1, border_radius=8)
-                    text = bank_font.render(f"  {'> ' if i == self.selected_bank else '  '}{name}", True, BLACK)
-                    self.screen.blit(text, (btn_rect.x + 10, btn_rect.centery - text.get_height() // 2))
-
-                help_font = get_font(18)
-                help_texts = [
-                    "JSON format: [{\"type\":\"text\",\"content\":\"A\",\"hint\":\"letter A\"}]",
-                    "type: text or image, content: value, hint: optional",
-                    "Place JSON files in data/custom/ folder",
-                ]
-                for j, t in enumerate(help_texts):
-                    hs = help_font.render(t, True, DARK_GRAY)
-                    self.screen.blit(hs, (100, y + len(self.bank_files) * 45 + 20 + j * 22))
-            else:
-                no_bank = bank_font.render("(No question banks found)", True, GRAY)
-                self.screen.blit(no_bank, (100, 550))
-                help_font = get_font(18)
-                help_texts = [
-                    "Place JSON question bank files in data/custom/ folder",
-                    "Format: [{\"type\":\"text\",\"content\":\"A\",\"hint\":\"letter A\"}]",
-                    "One item is randomly picked as target each round",
-                ]
-                for j, t in enumerate(help_texts):
-                    hs = help_font.render(t, True, DARK_GRAY)
-                    self.screen.blit(hs, (100, 590 + j * 22))
+        # === Right card: items ===
+        self.right_card.draw(self.screen)
+        self.text_input.draw(self.screen)
+        self.add_image_btn.draw(self.screen)
+        self._draw_items_list()
 
         self.start_btn.draw(self.screen)
 
-    def _get_settings(self):
-        items = []
-        if self.input_mode == "bank" and self.bank_files:
-            _, path = self.bank_files[self.selected_bank]
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    items = json.load(f)
-            except:
-                items = [{"type": "text", "content": chr(65 + i), "hint": ""} for i in range(26)]
-        else:
-            items = self.manual_items
+    def _draw_slider_label(self, slider, text):
+        # cover the light-text label drawn by the slider (parchment background)
+        cover = pygame.Rect(slider.x - 4, slider.y - 36, slider.w + 8, 30)
+        pygame.draw.rect(self.screen, T.PARCHMENT, cover)
+        label = render_text_outlined(text, T.FONT_BODY, T.TEXT_DARK,
+                                     outline_color=T.PARCHMENT, outline_w=1, bold=True)
+        self.screen.blit(label, (slider.x, slider.y - 32))
 
+    def _draw_speed_icons(self):
+        slider = self.speed_slider
+        y = slider.y + 60
+        track_x = slider.x
+        track_w = slider.w
+        for value, label, icon_fn, color in SPEED_ICONS:
+            ratio = (value - slider.min_val) / (slider.max_val - slider.min_val)
+            cx = track_x + int(ratio * track_w)
+            selected = (value == slider.value)
+            size = 14 if selected else 11
+            if selected:
+                pygame.draw.circle(self.screen, T.GOLD_LIGHT, (cx, y), 22)
+                pygame.draw.circle(self.screen, T.GOLD_DARK, (cx, y), 22, 2)
+            icon_fn(self.screen, cx, y, size, color)
+            if selected:
+                lbl = render_text_outlined(label, T.FONT_CAPTION, T.TEXT_DARK,
+                                           outline_color=T.PARCHMENT, outline_w=1, bold=True)
+                self.screen.blit(lbl, (cx - lbl.get_width() // 2, y + 24))
+
+    def _draw_items_list(self):
+        self._delete_btn_rects = []
+        list_top = self.right_card.rect.y + 160
+        list_bottom = self.right_card.rect.bottom - 30
+        list_left = self.right_card.rect.x + 30
+        list_right = self.right_card.rect.right - 30
+        # clipping region
+        clip_rect = pygame.Rect(list_left, list_top,
+                                list_right - list_left, list_bottom - list_top)
+        prev_clip = self.screen.get_clip()
+        self.screen.set_clip(clip_rect)
+
+        item_h = 44
+        if not self.manual_items:
+            hint = render_text_outlined(
+                "Add at least 1 item to start.",
+                T.FONT_BODY, T.TEXT_BROWN, outline_color=T.PARCHMENT,
+                outline_w=1, bold=True,
+            )
+            self.screen.blit(hint, (list_left + 8, list_top + 12))
+            sub = render_text_outlined(
+                "Each round picks one randomly.",
+                T.FONT_CAPTION, T.TEXT_MUTED, outline_color=T.PARCHMENT,
+                outline_w=1, bold=False,
+            )
+            self.screen.blit(sub, (list_left + 8, list_top + 44))
+        else:
+            for i, item in enumerate(self.manual_items):
+                row_y = list_top + i * item_h - self.scroll_offset
+                if row_y + item_h < list_top or row_y > list_bottom:
+                    continue
+                row_rect = pygame.Rect(list_left, row_y, list_right - list_left, item_h - 6)
+                pygame.draw.rect(self.screen, T.PARCHMENT_DARK, row_rect, border_radius=8)
+                pygame.draw.rect(self.screen, T.WOOD_BROWN, row_rect, 1, border_radius=8)
+
+                # type icon
+                icon_x = row_rect.x + 22
+                icon_y = row_rect.centery
+                if item["type"] == "image":
+                    draw_image_icon(self.screen, icon_x, icon_y, 11)
+                else:
+                    draw_text_icon(self.screen, icon_x, icon_y, 11)
+
+                # content text
+                if item["type"] == "image":
+                    display = os.path.basename(item["content"])
+                else:
+                    display = str(item["content"])
+                if len(display) > 22:
+                    display = display[:21] + "…"
+                txt = render_text_outlined(
+                    f"{i + 1}. {display}", T.FONT_BODY, T.TEXT_DARK,
+                    outline_color=T.PARCHMENT_DARK, outline_w=1, bold=False,
+                )
+                self.screen.blit(txt, (icon_x + 22, row_rect.centery - txt.get_height() // 2))
+
+                # delete button
+                del_x = row_rect.right - 24
+                del_y = row_rect.centery
+                del_rect = pygame.Rect(del_x - 16, del_y - 14, 32, 28)
+                pygame.draw.rect(self.screen, T.SV_RED, del_rect, border_radius=6)
+                pygame.draw.rect(self.screen, T.WOOD_DARK, del_rect, 1, border_radius=6)
+                draw_trash(self.screen, del_x, del_y, 8)
+                self._delete_btn_rects.append((del_rect, i))
+
+        self.screen.set_clip(prev_clip)
+
+        # scroll hint
+        if len(self.manual_items) * item_h > (list_bottom - list_top):
+            count_text = render_text_outlined(
+                f"{len(self.manual_items)} items (scroll to see more)",
+                T.FONT_CAPTION, T.TEXT_MUTED,
+                outline_color=T.PARCHMENT, outline_w=1, bold=False,
+            )
+            self.screen.blit(
+                count_text,
+                (list_left + 4, list_bottom - count_text.get_height() - 2),
+            )
+
+    def _get_settings(self):
         speed_map = {1: 1200, 2: 800, 3: 500, 4: 280, 5: 150}
         speed_level = self.speed_slider.value
 
@@ -221,5 +292,5 @@ class SettingsScreen:
             "num_rounds": self.round_slider.value,
             "swap_duration": speed_map.get(speed_level, 800),
             "speed_level": speed_level,
-            "items": items,
+            "items": self.manual_items,
         }

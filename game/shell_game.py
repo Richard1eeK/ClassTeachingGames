@@ -1,12 +1,18 @@
 import pygame
 import random
-import os
+
+from game import theme as T
+from game.theme import SCREEN_W, SCREEN_H
 from game.animations import Cup, AnimationManager
-from game.icons import draw_check, draw_cross, draw_eye
+from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_heart
+from game.effects import EffectsManager
+from game.decorations import (
+    get_wood_background, draw_parchment_card, draw_wood_plank,
+    draw_speech_bubble, make_floating_decorations,
+    update_floating_decorations, draw_floating_decorations,
+)
 from game.ui_components import (
-    get_font, Button,
-    BG_COLOR, BLACK, WHITE, CANDY_GREEN, CANDY_PINK, CANDY_BLUE,
-    DARK_GRAY, SCREEN_W, SCREEN_H
+    Button, get_font, render_text_outlined,
 )
 
 
@@ -23,6 +29,7 @@ class ShellGame:
 
         self.cups = []
         self.anim = AnimationManager()
+        self.effects = EffectsManager()
         self.state = "init"
         self.current_round = 0
         self.score = 0
@@ -30,10 +37,13 @@ class ShellGame:
         self.target_content = None
         self.target_hint = ""
         self.selected_cup = None
-        self.result_timer = 0
         self.show_result = False
         self.result_correct = False
         self.next_btn = None
+
+        # Background floats and bubble bob
+        self.decorations = make_floating_decorations(12, SCREEN_W, SCREEN_H, seed=23)
+        self.bubble_phase = 0.0
 
         self._setup_cups()
         self._prepare_round()
@@ -45,7 +55,7 @@ class ShellGame:
         spacing = cup_w + 30
         total_width = self.num_cups * cup_w + (self.num_cups - 1) * 30
         start_x = (SCREEN_W - total_width) // 2 + cup_w // 2
-        y = SCREEN_H // 2 + 40
+        y = SCREEN_H // 2 + 30
 
         for i in range(self.num_cups):
             x = start_x + i * spacing
@@ -74,7 +84,7 @@ class ShellGame:
             try:
                 img = pygame.image.load(target_item["content"])
                 self.target_cup.ball_content = img
-            except:
+            except Exception:
                 self.target_cup.ball_type = "text"
                 self.target_cup.ball_content = target_item["content"]
         else:
@@ -82,37 +92,32 @@ class ShellGame:
 
         self.state = "showing"
         self.anim = AnimationManager()
+        self.next_btn = None
 
         if self.speed_level >= 5:
-            # Insane: lightning reveal + full scramble
             self.anim.add_lift(self.cups, 250, 140)
             self.anim.add_pause(600)
             self.anim.add_lower(self.cups, 250)
             self.anim.add_pause(120)
-
             num_scrambles = self.num_cups * 3 + random.randint(5, 10)
             for _ in range(num_scrambles):
                 self.anim.add_scramble(self.cups, self.swap_duration)
                 self.anim.add_pause(25)
         elif self.speed_level >= 4:
-            # Ultra Fast: quick reveal + more swaps
             self.anim.add_lift(self.cups, 300, 140)
             self.anim.add_pause(800)
             self.anim.add_lower(self.cups, 300)
             self.anim.add_pause(200)
-
             num_swaps = self.num_cups * 2 + random.randint(3, 7)
             for _ in range(num_swaps):
                 a, b = random.sample(range(self.num_cups), 2)
                 self.anim.add_swap(self.cups[a], self.cups[b], self.swap_duration)
                 self.anim.add_pause(50)
         else:
-            # Normal
             self.anim.add_lift(self.cups, 400, 140)
             self.anim.add_pause(1200)
             self.anim.add_lower(self.cups, 400)
             self.anim.add_pause(300)
-
             num_swaps = self.num_cups + random.randint(2, 5)
             for _ in range(num_swaps):
                 a, b = random.sample(range(self.num_cups), 2)
@@ -152,11 +157,24 @@ class ShellGame:
                         self.score += 1
                     self.state = "revealing"
                     self.anim = AnimationManager()
-                    self.anim.add_lift([self.target_cup], 350, 140)
-                    if not self.result_correct:
-                        self.anim.add_pause(400)
-                        self.anim.add_lift([cup], 350, 140)
-                    self.anim.add_pause(1800)
+                    if self.result_correct:
+                        # lift the chosen (== target) cup with glow
+                        self.anim.add_lift([self.target_cup], 350, 140)
+                        self.anim.add_glow(self.target_cup, 1200, peak=1.0)
+                        self.anim.add_pause(1400)
+                        self.effects.burst_correct(cup.x, cup.y + 20)
+                        self.effects.add_text(cup.x, cup.y - 10, "+1 ⭐", T.GOLD_DARK, T.FONT_HEADING)
+                        self.effects.add_flash(T.GOLD_LIGHT, alpha=80)
+                    else:
+                        # shake wrong, then reveal correct
+                        self.anim.add_shake(cup, 500, intensity=12)
+                        self.anim.add_lift([cup], 250, 140)
+                        self.anim.add_pause(300)
+                        self.anim.add_lift([self.target_cup], 350, 140)
+                        self.anim.add_glow(self.target_cup, 1200, peak=0.7)
+                        self.anim.add_pause(1300)
+                        self.effects.burst_wrong(cup.x, cup.y + 20)
+                        self.effects.add_shake(amount=8, duration=240)
                     break
 
         elif self.state == "result_shown":
@@ -166,9 +184,13 @@ class ShellGame:
 
     def _update(self, dt):
         self.anim.update(dt)
+        self.effects.update(dt)
+        update_floating_decorations(self.decorations, dt)
+        self.bubble_phase += dt * 0.003
+
         mouse_pos = pygame.mouse.get_pos()
         if self.next_btn:
-            self.next_btn.update(mouse_pos)
+            self.next_btn.update(mouse_pos, dt)
 
         if self.state == "showing" and self.anim.done:
             self.state = "guessing"
@@ -178,63 +200,145 @@ class ShellGame:
             is_last = self.current_round + 1 >= self.num_rounds
             btn_text = "View Results" if is_last else "Next Round"
             self.next_btn = Button(
-                SCREEN_W // 2 - 100, SCREEN_H - 80, 200, 55,
-                btn_text, CANDY_GREEN, BLACK, 28
+                SCREEN_W // 2 - 110, SCREEN_H - 75, 220, 56,
+                btn_text, T.SV_GREEN, T.TEXT_LIGHT, T.FONT_HEADING,
             )
 
     def _draw(self):
-        self.screen.fill(BG_COLOR)
+        bg = get_wood_background(SCREEN_W, SCREEN_H)
+        self.screen.blit(bg, (0, 0))
+        draw_floating_decorations(self.screen, self.decorations, SCREEN_W, SCREEN_H)
 
-        # Round info
-        info_font = get_font(28)
-        round_text = info_font.render(
-            f"Round {self.current_round + 1}/{self.num_rounds}    Score: {self.score}",
-            True, BLACK
+        # Apply effect-based screen shake (offset everything below)
+        sx, sy = self.effects.get_shake_offset()
+
+        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        self._draw_hud(layer)
+        self._draw_status(layer)
+        self._draw_cups(layer)
+        self.effects.draw(layer)
+
+        self.screen.blit(layer, (sx, sy))
+
+        if self.state == "result_shown" and self.next_btn:
+            self.next_btn.draw(self.screen)
+
+    def _draw_hud(self, surface):
+        # Top wood plank with round + score
+        bar = pygame.Rect(40, 18, SCREEN_W - 80, 56)
+        draw_wood_plank(surface, bar, color=T.WOOD_BROWN, radius=T.RADIUS_MD)
+
+        # Round dots (left)
+        dot_x = bar.x + 24
+        dot_y = bar.centery
+        round_label = render_text_outlined(
+            "Round", T.FONT_BODY, T.TEXT_LIGHT,
+            outline_color=T.WOOD_DARK, outline_w=2, bold=True,
         )
-        self.screen.blit(round_text, (SCREEN_W // 2 - round_text.get_width() // 2, 20))
+        surface.blit(round_label, (dot_x, dot_y - round_label.get_height() // 2))
+        dot_x += round_label.get_width() + 12
+        dot_r = 9
+        for i in range(self.num_rounds):
+            color = T.GOLD if i < self.current_round else (
+                T.GOLD_LIGHT if i == self.current_round else T.PARCHMENT_DARK
+            )
+            outline = T.WOOD_DARK
+            if i == self.current_round and self.state != "finished":
+                pygame.draw.circle(surface, T.GOLD_LIGHT, (dot_x, dot_y), dot_r + 3)
+            pygame.draw.circle(surface, color, (dot_x, dot_y), dot_r)
+            pygame.draw.circle(surface, outline, (dot_x, dot_y), dot_r, 2)
+            dot_x += dot_r * 2 + 6
 
-        if self.state == "guessing":
-            prompt_font = get_font(34)
+        # Score (right)
+        score_text = render_text_outlined(
+            f"Score: {self.score}", T.FONT_BODY, T.TEXT_LIGHT,
+            outline_color=T.WOOD_DARK, outline_w=2, bold=True,
+        )
+        score_x = bar.right - score_text.get_width() - 50
+        surface.blit(score_text, (score_x, bar.centery - score_text.get_height() // 2))
+        # star icon to right of score
+        draw_star(surface, bar.right - 28, bar.centery, 14, T.GOLD, outline=T.WOOD_DARK)
+
+    def _draw_status(self, surface):
+        # Speech bubble for status, bobbing slightly
+        import math
+        bob = int(math.sin(self.bubble_phase) * 3)
+        bubble_w = 460
+        bubble_h = 90
+        bubble_rect = pygame.Rect(
+            SCREEN_W // 2 - bubble_w // 2,
+            100 + bob,
+            bubble_w, bubble_h,
+        )
+
+        if self.state == "showing":
+            text = "Watch the cup that hides the target..."
+            color = T.TEXT_BROWN
+            draw_speech_bubble(surface, bubble_rect, fill=T.PARCHMENT,
+                               border=T.WOOD_DARK, tail="bottom")
+            draw_eye(surface, bubble_rect.x + 30, bubble_rect.centery, 18, T.TEXT_BROWN)
+            text_surf = render_text_outlined(text, T.FONT_HEADING, color,
+                                              outline_color=T.PARCHMENT, outline_w=1, bold=True)
+            surface.blit(text_surf, (
+                bubble_rect.centerx - text_surf.get_width() // 2 + 16,
+                bubble_rect.centery - text_surf.get_height() // 2,
+            ))
+
+        elif self.state == "guessing":
             if self.target_hint:
-                prompt = f"Find: {self.target_hint}"
+                text = f"Find: {self.target_hint}"
             elif self.target_content is not None:
                 display = self.target_content if isinstance(self.target_content, str) else "[Image]"
-                prompt = f"Find: {display}"
+                text = f"Find: {display}"
             else:
-                prompt = "Find the target!"
-            prompt_surf = prompt_font.render(prompt, True, CANDY_PINK)
-            self.screen.blit(prompt_surf, (SCREEN_W // 2 - prompt_surf.get_width() // 2, 70))
+                text = "Find the target!"
+            draw_speech_bubble(surface, bubble_rect, fill=T.PARCHMENT,
+                               border=T.WOOD_DARK, tail="bottom")
+            text_surf = render_text_outlined(text, T.FONT_HEADING, T.SV_BLUE_DARK,
+                                             outline_color=T.PARCHMENT, outline_w=1, bold=True)
+            surface.blit(text_surf, (
+                bubble_rect.centerx - text_surf.get_width() // 2,
+                bubble_rect.centery - text_surf.get_height() // 2,
+            ))
 
-            hint_font = get_font(22)
-            hint = hint_font.render("Click the cup hiding the target", True, DARK_GRAY)
-            self.screen.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, SCREEN_H - 60))
+            hint = render_text_outlined(
+                "Click the cup hiding the target",
+                T.FONT_CAPTION, T.TEXT_MUTED,
+                outline_color=T.CREAM_BG, outline_w=1, bold=False,
+            )
+            surface.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, SCREEN_H - 50))
 
         elif self.state in ("revealing", "result_shown"):
-            result_font = get_font(38)
             if self.result_correct:
-                result_text = result_font.render("Correct! Well done!", True, CANDY_GREEN)
+                text = "Correct! Well done!"
+                color = T.SV_GREEN_DARK
+                bg_fill = T.PARCHMENT
             else:
-                result_text = result_font.render("Wrong! Here's the correct cup~", True, CANDY_PINK)
-            tx = SCREEN_W // 2 - result_text.get_width() // 2
-            self.screen.blit(result_text, (tx, 70))
-            icon_x = tx - 35
-            icon_y = 70 + result_text.get_height() // 2
+                text = "Not quite — here's the right cup."
+                color = T.SV_RED_DARK
+                bg_fill = T.PARCHMENT
+            draw_speech_bubble(surface, bubble_rect, fill=bg_fill,
+                               border=T.WOOD_DARK, tail="bottom")
+            text_surf = render_text_outlined(text, T.FONT_HEADING, color,
+                                             outline_color=T.PARCHMENT, outline_w=1, bold=True)
+            tx = bubble_rect.centerx - text_surf.get_width() // 2 + 18
+            ty = bubble_rect.centery - text_surf.get_height() // 2
+            surface.blit(text_surf, (tx, ty))
             if self.result_correct:
-                draw_check(self.screen, icon_x, icon_y, 24, CANDY_GREEN)
+                draw_check(surface, tx - 22, bubble_rect.centery, 18, T.SV_GREEN_DARK)
             else:
-                draw_cross(self.screen, icon_x, icon_y, 24, CANDY_PINK)
+                draw_cross(surface, tx - 22, bubble_rect.centery, 18, T.SV_RED_DARK)
 
-            if self.state == "result_shown" and self.next_btn:
-                self.next_btn.draw(self.screen)
-
-        elif self.state == "showing":
-            show_font = get_font(28)
-            show_text = show_font.render("Watch where the target is hiding!", True, DARK_GRAY)
-            tx = SCREEN_W // 2 - show_text.get_width() // 2
-            self.screen.blit(show_text, (tx, 70))
-            draw_eye(self.screen, tx - 25, 70 + show_text.get_height() // 2, 20, DARK_GRAY)
+    def _draw_cups(self, surface):
+        # Ground line under cups (subtle wood plank shelf)
+        ground_y = self.cups[0].y + self.cups[0].height + 12 if self.cups else SCREEN_H - 120
+        shelf_rect = pygame.Rect(60, ground_y, SCREEN_W - 120, 12)
+        pygame.draw.rect(surface, T.WOOD_BROWN, shelf_rect, border_radius=6)
+        pygame.draw.rect(surface, T.WOOD_DARK, shelf_rect, 2, border_radius=6)
 
         for cup in self.cups:
-            show = (self.state == "showing" and cup.lifted) or \
-                   (self.state in ("revealing", "result_shown") and cup.lifted)
-            cup.draw(self.screen, show_ball=show)
+            show = (
+                (self.state == "showing" and cup.lifted)
+                or (self.state in ("revealing", "result_shown") and cup.lifted)
+            )
+            cup.draw(surface, show_ball=show)

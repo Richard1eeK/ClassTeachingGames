@@ -1,9 +1,18 @@
 import pygame
-from game.icons import draw_star, draw_cross
+import math
+
+from game import theme as T
+from game.theme import SCREEN_W, SCREEN_H
+from game.icons import draw_star, draw_cross, draw_replay, draw_door
+from game.animations import ease_out_back, ease_out_elastic
+from game.effects import EffectsManager
+from game.decorations import (
+    get_wood_background, draw_parchment_card, draw_wood_plank,
+    make_floating_decorations, update_floating_decorations,
+    draw_floating_decorations,
+)
 from game.ui_components import (
-    Button, get_font,
-    BG_COLOR, BLACK, CANDY_GREEN, CANDY_PINK, CANDY_BLUE,
-    CANDY_YELLOW, CANDY_PURPLE, DARK_GRAY, SCREEN_W, SCREEN_H
+    Button, get_font, render_text_outlined, WoodSign,
 )
 
 
@@ -15,15 +24,42 @@ class Scoreboard:
         self.total = result["total"]
         self.ratio = self.score / max(1, self.total)
 
-        self.replay_btn = Button(SCREEN_W // 2 - 220, SCREEN_H - 120, 200, 60, "Play Again", CANDY_GREEN, BLACK, 30)
-        self.quit_btn = Button(SCREEN_W // 2 + 20, SCREEN_H - 120, 200, 60, "Quit", CANDY_PINK, BLACK, 30)
+        self.replay_btn = Button(SCREEN_W // 2 - 230, SCREEN_H - 110, 210, 64,
+                                 "Play Again", T.SV_GREEN, T.TEXT_LIGHT,
+                                 T.FONT_HEADING, icon=draw_replay)
+        self.quit_btn = Button(SCREEN_W // 2 + 20, SCREEN_H - 110, 210, 64,
+                               "Quit", T.SV_RED, T.TEXT_LIGHT,
+                               T.FONT_HEADING, icon=draw_door)
+
+        self.title_sign = WoodSign(SCREEN_W // 2 - 240, 60, 480, 80,
+                                   "Game Over!", font_size=T.FONT_TITLE)
+
+        self.decorations = make_floating_decorations(20, SCREEN_W, SCREEN_H, seed=37)
+
+        self.effects = EffectsManager()
+        self.elapsed = 0.0
+        # animation timing constants (ms)
+        self.score_anim_start = 350
+        self.score_anim_dur = 700
+        self.bar_anim_start = 1100
+        self.bar_anim_dur = 800
+        self.star_anim_start = 1900
+        self.star_step = 220
+        self.star_anim_dur = 600
+
+        self._stars_burst = [False, False, False]
+
+        self.target_star_count = self._get_star_count()
 
     def run(self):
         while True:
             dt = self.clock.tick(60)
+            self.elapsed += dt
             mouse_pos = pygame.mouse.get_pos()
-            self.replay_btn.update(mouse_pos)
-            self.quit_btn.update(mouse_pos)
+            self.replay_btn.update(mouse_pos, dt)
+            self.quit_btn.update(mouse_pos, dt)
+            self.effects.update(dt)
+            update_floating_decorations(self.decorations, dt)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -34,46 +70,171 @@ class Scoreboard:
                     if self.quit_btn.is_clicked(event.pos, True):
                         return "quit"
 
+            self._spawn_star_bursts()
             self._draw()
             pygame.display.flip()
 
+    def _spawn_star_bursts(self):
+        for i in range(self.target_star_count):
+            t_start = self.star_anim_start + i * self.star_step
+            if self.elapsed >= t_start + self.star_anim_dur * 0.55 and not self._stars_burst[i]:
+                star_x, star_y = self._star_position(i)
+                self.effects.burst_stars(star_x, star_y, count=10, color=T.GOLD)
+                self._stars_burst[i] = True
+
+    def _star_position(self, i):
+        star_size = 36
+        spacing = star_size * 2 + 22
+        total_w = self.target_star_count * spacing - (spacing - star_size * 2)
+        if self.target_star_count == 0:
+            total_w = star_size * 2
+        start_x = SCREEN_W // 2 - total_w // 2 + star_size
+        return start_x + i * spacing, 510
+
     def _draw(self):
-        self.screen.fill(BG_COLOR)
+        bg = get_wood_background(SCREEN_W, SCREEN_H)
+        self.screen.blit(bg, (0, 0))
+        draw_floating_decorations(self.screen, self.decorations, SCREEN_W, SCREEN_H)
 
-        title_font = get_font(44)
-        title = title_font.render("Game Over!", True, CANDY_PURPLE)
-        self.screen.blit(title, (SCREEN_W // 2 - title.get_width() // 2, 80))
+        self.title_sign.draw(self.screen)
 
-        score_font = get_font(60)
-        score_text = score_font.render(f"{self.score} / {self.total}", True, BLACK)
-        self.screen.blit(score_text, (SCREEN_W // 2 - score_text.get_width() // 2, 200))
+        # Center parchment card
+        card_rect = pygame.Rect(SCREEN_W // 2 - 360, 170, 720, 380)
+        draw_parchment_card(self.screen, card_rect)
 
-        msg = self._get_encouragement()
-        msg_font = get_font(32)
-        msg_surf = msg_font.render(msg, True, CANDY_GREEN if self.ratio >= 0.5 else CANDY_PINK)
-        self.screen.blit(msg_surf, (SCREEN_W // 2 - msg_surf.get_width() // 2, 320))
+        self._draw_score(card_rect)
+        self._draw_message(card_rect)
+        self._draw_progress_bar(card_rect)
+        self._draw_stars()
 
-        bar_w = 400
-        bar_h = 30
-        bar_x = SCREEN_W // 2 - bar_w // 2
-        bar_y = 400
-        pygame.draw.rect(self.screen, DARK_GRAY, (bar_x, bar_y, bar_w, bar_h), border_radius=15)
-        fill_w = int(bar_w * self.ratio)
-        if fill_w > 0:
-            color = CANDY_GREEN if self.ratio >= 0.7 else CANDY_YELLOW if self.ratio >= 0.4 else CANDY_PINK
-            pygame.draw.rect(self.screen, color, (bar_x, bar_y, fill_w, bar_h), border_radius=15)
-
-        star_count = self._get_star_count()
-        star_size = 32
-        total_w = star_count * (star_size * 2 + 10) - 10
-        star_x = SCREEN_W // 2 - total_w // 2 + star_size
-        star_y = 475
-        color = CANDY_YELLOW if star_count > 0 else CANDY_PINK
-        for i in range(max(1, star_count)):
-            draw_star(self.screen, star_x + i * (star_size * 2 + 10), star_y, star_size, color)
+        self.effects.draw(self.screen)
 
         self.replay_btn.draw(self.screen)
         self.quit_btn.draw(self.screen)
+
+    def _draw_score(self, card_rect):
+        # Score number with spring entry
+        t_raw = (self.elapsed - self.score_anim_start) / self.score_anim_dur
+        t = max(0.0, min(1.0, t_raw))
+        if t_raw < 0:
+            scale = 0.0
+        else:
+            scale = ease_out_back(t)
+
+        if scale <= 0.01:
+            return
+        font_size = int(72 * scale)
+        if font_size < 8:
+            return
+        text_str = f"{self.score} / {self.total}"
+        # render with outlined text (bigger outline for impact)
+        from game.ui_components import render_text_outlined
+        score_surf = render_text_outlined(
+            text_str, font_size, T.GOLD,
+            outline_color=T.WOOD_DARK, outline_w=3, bold=True,
+        )
+        x = card_rect.centerx - score_surf.get_width() // 2
+        y = card_rect.y + 40
+        self.screen.blit(score_surf, (x, y))
+
+    def _draw_message(self, card_rect):
+        if self.elapsed < self.score_anim_start + 200:
+            return
+        msg = self._get_encouragement()
+        color = T.SV_GREEN_DARK if self.ratio >= 0.5 else T.SV_RED_DARK
+        msg_surf = render_text_outlined(
+            msg, T.FONT_HEADING, color,
+            outline_color=T.PARCHMENT, outline_w=1, bold=True,
+        )
+        self.screen.blit(msg_surf, (
+            card_rect.centerx - msg_surf.get_width() // 2,
+            card_rect.y + 150,
+        ))
+
+    def _draw_progress_bar(self, card_rect):
+        bar_w = 480
+        bar_h = 26
+        bar_x = card_rect.centerx - bar_w // 2
+        bar_y = card_rect.y + 230
+
+        # frame
+        frame = pygame.Rect(bar_x - 4, bar_y - 4, bar_w + 8, bar_h + 8)
+        pygame.draw.rect(self.screen, T.WOOD_DARK, frame, border_radius=15)
+        pygame.draw.rect(self.screen, T.WOOD_BROWN, frame, 2, border_radius=15)
+        pygame.draw.rect(self.screen, T.PARCHMENT_DARK,
+                         (bar_x, bar_y, bar_w, bar_h), border_radius=12)
+
+        # fill
+        t_raw = (self.elapsed - self.bar_anim_start) / self.bar_anim_dur
+        t = max(0.0, min(1.0, t_raw))
+        if t > 0:
+            fill_w = int(bar_w * self.ratio * t)
+            if fill_w > 0:
+                if self.ratio >= 0.7:
+                    color = T.SV_GREEN
+                    color_dark = T.SV_GREEN_DARK
+                elif self.ratio >= 0.4:
+                    color = T.GOLD
+                    color_dark = T.GOLD_DARK
+                else:
+                    color = T.SV_RED
+                    color_dark = T.SV_RED_DARK
+                pygame.draw.rect(self.screen, color_dark,
+                                 (bar_x, bar_y, fill_w, bar_h), border_radius=12)
+                # top highlight
+                pygame.draw.rect(self.screen, color,
+                                 (bar_x + 2, bar_y + 3, max(0, fill_w - 4), bar_h // 2),
+                                 border_radius=10)
+
+                # animated shimmer sweeping across the bar
+                sweep_period = 1500
+                sweep_t = (self.elapsed % sweep_period) / sweep_period
+                sweep_x = bar_x + int(sweep_t * (bar_w + 60)) - 30
+                shimmer = pygame.Surface((50, bar_h), pygame.SRCALPHA)
+                for sx in range(50):
+                    alpha = int(80 * math.sin(sx / 50 * math.pi))
+                    pygame.draw.line(shimmer, (255, 255, 255, alpha),
+                                     (sx, 0), (sx, bar_h))
+                shimmer_clip = pygame.Surface((bar_w, bar_h), pygame.SRCALPHA)
+                shimmer_clip.blit(shimmer, (sweep_x - bar_x, 0))
+                # mask to fill area
+                mask = pygame.Surface((bar_w, bar_h), pygame.SRCALPHA)
+                pygame.draw.rect(mask, (255, 255, 255, 255),
+                                 (0, 0, fill_w, bar_h), border_radius=12)
+                shimmer_clip.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+                self.screen.blit(shimmer_clip, (bar_x, bar_y))
+
+    def _draw_stars(self):
+        if self.target_star_count == 0:
+            # show 1 grey star
+            star_x, star_y = self._star_position(0)
+            self.target_star_count_for_layout = 1
+            draw_star(self.screen, star_x, star_y, 30, T.PARCHMENT_DARK,
+                      filled=True, outline=T.WOOD_BROWN)
+            return
+
+        for i in range(self.target_star_count):
+            t_start = self.star_anim_start + i * self.star_step
+            t_raw = (self.elapsed - t_start) / self.star_anim_dur
+            t = max(0.0, min(1.0, t_raw))
+            if t <= 0:
+                continue
+            # elastic pop
+            scale = ease_out_elastic(t)
+            size = max(1, int(36 * max(0, scale)))
+            star_x, star_y = self._star_position(i)
+            # gold glow behind
+            if t > 0.4:
+                glow_r = int(size * 1.4)
+                glow = pygame.Surface((glow_r * 2, glow_r * 2), pygame.SRCALPHA)
+                for k in range(5):
+                    alpha = int(40 * (1 - k / 5))
+                    pygame.draw.circle(glow,
+                                       (T.GOLD_LIGHT[0], T.GOLD_LIGHT[1], T.GOLD_LIGHT[2], alpha),
+                                       (glow_r, glow_r), glow_r - k * 4)
+                self.screen.blit(glow, (star_x - glow_r, star_y - glow_r))
+            draw_star(self.screen, star_x, star_y, size, T.GOLD,
+                      filled=True, outline=T.WOOD_DARK)
 
     def _get_encouragement(self):
         if self.ratio >= 0.9:
