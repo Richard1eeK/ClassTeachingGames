@@ -16,7 +16,7 @@ from game.icons import (
     draw_snail, draw_rabbit, draw_lightning, draw_flame, draw_tornado,
     draw_image_icon, draw_text_icon, draw_trash, draw_plus,
 )
-from game.question_bank import read_text_bank_file
+from game.question_bank import read_text_bank_file, scan_image_folder
 
 
 SPEED_ICONS = [
@@ -55,17 +55,17 @@ class SettingsScreen:
         self.right_card = Card(SCREEN_W - 480, 130, 430, 510, title="Your Items")
         self.text_input = TextInput(
             self.right_card.rect.x + 26, self.right_card.rect.y + 70,
-            self.right_card.rect.width - 236, 44, "Type a word and press Enter",
+            self.right_card.rect.width - 252, 44, "Type a word and press Enter",
             font_size=T.FONT_CAPTION,
         )
         self.import_text_btn = Button(
-            self.right_card.rect.right - 196, self.right_card.rect.y + 70,
+            self.right_card.rect.right - 212, self.right_card.rect.y + 70,
             90, 44, "Import", T.GOLD, T.TEXT_LIGHT, T.FONT_CAPTION,
             icon=draw_text_icon,
         )
         self.add_image_btn = Button(
-            self.right_card.rect.right - 100, self.right_card.rect.y + 70,
-            74, 44, "Image", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
+            self.right_card.rect.right - 116, self.right_card.rect.y + 70,
+            90, 44, "Folder", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
             icon=draw_image_icon,
         )
 
@@ -128,7 +128,7 @@ class SettingsScreen:
                 elif self.import_text_btn.is_clicked(pos, True):
                     self._import_text_bank()
                 elif self.add_image_btn.is_clicked(pos, True):
-                    self._add_image()
+                    self._import_image_folder()
                 else:
                     # delete buttons in items list
                     for rect, idx in self._delete_btn_rects:
@@ -154,22 +154,18 @@ class SettingsScreen:
         except Exception:
             pass
 
-    def _add_image(self):
+    def _import_image_folder(self):
         try:
             import tkinter as tk
             from tkinter import filedialog
             root = tk.Tk()
             root.withdraw()
-            file_path = filedialog.askopenfilename(
-                filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp *.gif")]
-            )
+            folder_path = filedialog.askdirectory()
             root.destroy()
-            if file_path:
-                self.manual_items.append({
-                    "type": "image",
-                    "content": file_path,
-                    "hint": "",
-                })
+            if folder_path:
+                items = scan_image_folder(folder_path)
+                if items:
+                    self.manual_items.extend(items)
         except Exception:
             pass
 

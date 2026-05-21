@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v1.7` — 文字题库 TXT 导入
+**最新 tag**：`v1.8` — 图片文件夹导入
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -69,11 +69,21 @@
 - 导入后追加到 `Your Items` 列表，设置页保持打开，老师可继续删除、追加和调整设置
 - v1.7 不处理图片导入、不自动开始游戏、不做重复项清理
 
+### 长单词可读性修复（v1.7.1）
+- 目标展示牌和杯内答案牌改为白底黑字
+- manufacturer 等长词会自动缩字号并完整显示
+
+### 图片文件夹导入（v1.8）
+- `Folder` 按钮选择一个图片文件夹，自动导入其中所有图片
+- 支持 `.png` / `.jpg` / `.jpeg` / `.bmp` / `.gif`，按文件名排序导入
+- 导入后追加为 image items，设置页保持打开，不自动开始游戏
+- 只扫描所选文件夹第一层，不递归子文件夹
+
 ## 当前项目状态
 
-- **代码工作目录状态**：v1.7 文字题库导入改动完成后需 commit/tag/push
-- **macOS 验证**：解析样例、`python3 -m compileall main.py game`、`SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <settings smoke>` 通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.7 需要重点确认 exe 中 tkinter 文件选择器和 TXT 导入行为
+- **代码工作目录状态**：v1.8 图片文件夹导入改动完成后需 commit/tag/push
+- **macOS 验证**：图片文件夹扫描样例、`python3 -m compileall main.py game`、`SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <settings smoke>` 通过；真实窗口仍受本机 pygame/font 限制未跑
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.8 需要重点确认 exe 中 tkinter 文件夹选择器和图片导入行为
 - **当前阻塞**：无
 
 ## 未完成 / 待确认
@@ -85,7 +95,7 @@
 - **音效系统**：`assets/sounds/` 目录已存在但是空的；用户当时表示"一会再讨论"，至今未启用
   - `build.bat` 还**没加** `--add-data "assets;assets"`，加音效前必须先补
   - 如果走 B/A 视觉路径，资源打包问题需要一起解决（assets 整体打进 exe）
-- **图片题库导入**：v1.7 先只做文字 TXT 导入。图片方案暂定后续讨论，方向可能是“题库 TXT 引用图片文件夹”或“直接导入图片文件夹”。`data/custom/` 目录还在，旧 JSON 约定格式 `[{"type": "text"|"image", "content": str, "hint": str}]` 可作为未来兼容格式。
+- **图片题库高级规则**：v1.8 已支持直接导入图片文件夹。后续若需要“题库 TXT 引用图片文件夹”“按文件名生成 hint”“递归扫描子文件夹”或 JSON 兼容，再单独设计。`data/custom/` 目录还在，旧 JSON 约定格式 `[{"type": "text"|"image", "content": str, "hint": str}]` 可作为未来兼容格式。
 - **更多游戏**：项目命名是复数 `ClassTeachingGames`，未来可能加新游戏
 
 ### 已知行为问题（**非 bug，但可能体验不佳**）
@@ -94,17 +104,19 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v1.7 文字题库导入。
+**主线**：等 Windows 端实测 v1.8 图片文件夹导入。
 
-**v1.7 后的候选方向**：
-1. Windows 端实测 `build.bat` 后 exe 是否能通过 `Import` 按钮导入 `.txt` 题库
-2. 继续讨论图片题库：题库 TXT 引用图片文件夹 vs 直接导入图片文件夹
+**v1.8 后的候选方向**：
+1. Windows 端实测 `build.bat` 后 exe 是否能通过 `Folder` 按钮导入图片文件夹
+2. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
 3. 如果配色仍偏旧，继续只调 `game/theme.py` + `assets/pixel/*.png` 色值，不先动布局
 4. 如果视觉和题库流程已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
 
 ## 版本回滚速查
 
 ```bash
+git reset --hard v1.8          # 图片文件夹导入
+git reset --hard v1.7.1        # 修复长单词目标牌显示溢出
 git reset --hard v1.7          # 文字题库 TXT 导入
 git reset --hard v1.6          # Champagne Farm 轻奢香槟配色
 git reset --hard v1.4-pixel-ui # 像素素材皮肤 + 紧致星露谷风 UI

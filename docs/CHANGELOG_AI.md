@@ -7,6 +7,38 @@
 
 ## 2026-05-21
 
+### v1.8 — 图片文件夹导入
+
+**目标**：用户希望把图片都放进一个文件夹，然后点击导入到游戏内自动识别。明确不做拖入，先做点击按钮选择文件夹。
+
+**改造文件**：
+- `game/question_bank.py` — 新增 `scan_image_folder`，识别 `.png` / `.jpg` / `.jpeg` / `.bmp` / `.gif` 并生成 image items
+- `game/settings.py` — 将原单张 `Image` 入口改为 `Folder`，使用 tkinter `askdirectory()` 选择文件夹并追加图片 items
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.8 状态、决策和验证
+
+**验证**：
+- image folder scan sample 通过：忽略非图片文件，按文件名排序，保留原始绝对路径
+- `python3 -m compileall main.py game` 通过
+- `SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <settings smoke>` 通过：图片 items 导入后 SettingsScreen 仍保持打开，不自动开始游戏
+- 已导出 Settings 预览图检查 `Folder` 按钮和图片列表布局
+- Windows 端仍需用户 `git pull` + `build.bat` 实测 exe 文件夹选择器和图片导入
+
+---
+
+### v1.7.1 — 修复长单词目标牌显示溢出
+
+**目标**：manufacturer 等长词在目标展示牌/杯内答案牌中无法完整显示。
+
+**改造文件**：
+- `game/animations.py` — 目标展示牌和杯内答案牌改为白底黑字；新增自适应字号逻辑；杯内答案牌加宽
+
+**验证**：
+- `python3 -m compileall main.py game` 通过
+- `SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <long-word smoke>` 通过
+- 已导出 manufacturer intro 和杯内答案预览图确认完整可读
+
+---
+
 ### v1.7 — 文字题库 TXT 导入
 
 **目标**：先恢复一个最小可用的题库导入版本：老师选择普通 `.txt` 编号列表，程序自动追加到 SettingsScreen 的 `Your Items`，但不自动开始游戏。图片题库先放一边。

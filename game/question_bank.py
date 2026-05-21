@@ -1,5 +1,8 @@
+import os
 import re
 
+
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
 
 _LIST_MARKER_RE = re.compile(r"^(?:(?:\d+[\.)、]\s*)|(?:\d+\s+\S)|(?:[-*]\s+))")
 
@@ -29,3 +32,21 @@ def read_text_bank_file(path):
             continue
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         return parse_text_bank_lines(f.readlines())
+
+
+def scan_image_folder(folder_path):
+    items = []
+    try:
+        names = sorted(os.listdir(folder_path), key=lambda name: name.lower())
+    except OSError:
+        return items
+
+    for name in names:
+        path = os.path.join(folder_path, name)
+        if not os.path.isfile(path):
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        if ext not in IMAGE_EXTENSIONS:
+            continue
+        items.append({"type": "image", "content": path, "hint": ""})
+    return items
