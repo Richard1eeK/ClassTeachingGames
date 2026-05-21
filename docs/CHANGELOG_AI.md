@@ -7,6 +7,27 @@
 
 ## 2026-05-21
 
+### v1.7 — 文字题库 TXT 导入
+
+**目标**：先恢复一个最小可用的题库导入版本：老师选择普通 `.txt` 编号列表，程序自动追加到 SettingsScreen 的 `Your Items`，但不自动开始游戏。图片题库先放一边。
+
+**新建文件**：
+- `game/question_bank.py` — 纯文本题库解析：支持编号、短横线、星号和普通行，输出 text items
+- `docs/superpowers/specs/2026-05-21-v17-text-bank-import-design.md` — v1.7 文字题库导入设计说明
+
+**改造文件**：
+- `game/settings.py` — `Your Items` 顶部新增 `Import` 按钮；使用 tkinter 选择 `.txt`，解析后追加到 `manual_items`，设置页保持打开
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.7 状态、决策和验证
+
+**验证**：
+- parser sample check 通过：`1. apple` / `2 banana` / `3) cat` / `4、dog` / `- elephant` / `* frog` / 普通行 / 纯数字题目
+- `python3 -m compileall main.py game` 通过
+- `SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <settings smoke>` 通过：导入 items 后 SettingsScreen 仍保持打开，不自动开始游戏
+- 已导出 Settings 预览图检查 `Import` 按钮布局
+- Windows 端仍需用户 `git pull` + `build.bat` 实测 exe 文件选择器和 TXT 导入
+
+---
+
 ### v1.6 — Champagne Farm 轻奢香槟配色
 
 **目标**：用户反馈 v1.4 颜色太深、显旧，希望先只改配色，做成更轻奢、明亮、干净的视觉气质。

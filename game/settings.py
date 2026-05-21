@@ -16,6 +16,7 @@ from game.icons import (
     draw_snail, draw_rabbit, draw_lightning, draw_flame, draw_tornado,
     draw_image_icon, draw_text_icon, draw_trash, draw_plus,
 )
+from game.question_bank import read_text_bank_file
 
 
 SPEED_ICONS = [
@@ -54,12 +55,17 @@ class SettingsScreen:
         self.right_card = Card(SCREEN_W - 480, 130, 430, 510, title="Your Items")
         self.text_input = TextInput(
             self.right_card.rect.x + 26, self.right_card.rect.y + 70,
-            self.right_card.rect.width - 160, 44, "Type a word and press Enter",
+            self.right_card.rect.width - 236, 44, "Type a word and press Enter",
             font_size=T.FONT_CAPTION,
         )
+        self.import_text_btn = Button(
+            self.right_card.rect.right - 196, self.right_card.rect.y + 70,
+            90, 44, "Import", T.GOLD, T.TEXT_LIGHT, T.FONT_CAPTION,
+            icon=draw_text_icon,
+        )
         self.add_image_btn = Button(
-            self.right_card.rect.right - 122, self.right_card.rect.y + 70,
-            96, 44, "Image", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
+            self.right_card.rect.right - 100, self.right_card.rect.y + 70,
+            74, 44, "Image", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
             icon=draw_image_icon,
         )
 
@@ -119,6 +125,8 @@ class SettingsScreen:
                 pos = event.pos
                 if self.start_btn.is_clicked(pos, True):
                     self.running = False
+                elif self.import_text_btn.is_clicked(pos, True):
+                    self._import_text_bank()
                 elif self.add_image_btn.is_clicked(pos, True):
                     self._add_image()
                 else:
@@ -128,6 +136,23 @@ class SettingsScreen:
                             if 0 <= idx < len(self.manual_items):
                                 self.manual_items.pop(idx)
                             break
+
+    def _import_text_bank(self):
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+            root = tk.Tk()
+            root.withdraw()
+            file_path = filedialog.askopenfilename(
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+            )
+            root.destroy()
+            if file_path:
+                items = read_text_bank_file(file_path)
+                if items:
+                    self.manual_items.extend(items)
+        except Exception:
+            pass
 
     def _add_image(self):
         try:
@@ -151,6 +176,7 @@ class SettingsScreen:
     def _update(self, dt):
         mouse_pos = pygame.mouse.get_pos()
         self.start_btn.update(mouse_pos, dt)
+        self.import_text_btn.update(mouse_pos, dt)
         self.add_image_btn.update(mouse_pos, dt)
         self.text_input.update(dt)
         update_floating_decorations(self.decorations, dt)
@@ -184,6 +210,7 @@ class SettingsScreen:
         # === Right card: items ===
         self.right_card.draw(self.screen)
         self.text_input.draw(self.screen)
+        self.import_text_btn.draw(self.screen)
         self.add_image_btn.draw(self.screen)
         self._draw_items_list()
 

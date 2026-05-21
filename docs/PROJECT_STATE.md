@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v1.6` — Champagne Farm 轻奢香槟配色
+**最新 tag**：`v1.7` — 文字题库 TXT 导入
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -63,11 +63,17 @@
 - 重生成 `assets/pixel/*.png` 同名同尺寸素材，去掉 v1.4 深木色带来的旧感
 - 同步更新 `game/theme.py` 主题 token、硬编码阴影和 intro 遮罩，让游戏画面也保持明亮
 
+### 文字题库导入（v1.7）
+- 新增 `Import` 按钮，支持从 `.txt` 导入文字题库
+- 支持 `1. apple` / `1 apple` / `1) apple` / `1、apple` / `- apple` / `apple` 等常见列表写法
+- 导入后追加到 `Your Items` 列表，设置页保持打开，老师可继续删除、追加和调整设置
+- v1.7 不处理图片导入、不自动开始游戏、不做重复项清理
+
 ## 当前项目状态
 
-- **代码工作目录状态**：v1.6 配色改动完成后需 commit/tag/push
-- **macOS 验证**：`python3 -m compileall main.py game` 通过；`SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <smoke>` 三屏渲染通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.6 需要重点确认 Champagne Farm 配色在 exe 中是否够轻奢、够明亮
+- **代码工作目录状态**：v1.7 文字题库导入改动完成后需 commit/tag/push
+- **macOS 验证**：解析样例、`python3 -m compileall main.py game`、`SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <settings smoke>` 通过；真实窗口仍受本机 pygame/font 限制未跑
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.7 需要重点确认 exe 中 tkinter 文件选择器和 TXT 导入行为
 - **当前阻塞**：无
 
 ## 未完成 / 待确认
@@ -79,7 +85,7 @@
 - **音效系统**：`assets/sounds/` 目录已存在但是空的；用户当时表示"一会再讨论"，至今未启用
   - `build.bat` 还**没加** `--add-data "assets;assets"`，加音效前必须先补
   - 如果走 B/A 视觉路径，资源打包问题需要一起解决（assets 整体打进 exe）
-- **题库 JSON 加载**：v1.0 重做时删除了 "Load Bank" 模式，目前只有手动输入。`data/custom/` 目录还在，约定格式 `[{"type": "text"|"image", "content": str, "hint": str}]`，等用户决定是否重新引入（可能改成自动扫描 + UI 选择）
+- **图片题库导入**：v1.7 先只做文字 TXT 导入。图片方案暂定后续讨论，方向可能是“题库 TXT 引用图片文件夹”或“直接导入图片文件夹”。`data/custom/` 目录还在，旧 JSON 约定格式 `[{"type": "text"|"image", "content": str, "hint": str}]` 可作为未来兼容格式。
 - **更多游戏**：项目命名是复数 `ClassTeachingGames`，未来可能加新游戏
 
 ### 已知行为问题（**非 bug，但可能体验不佳**）
@@ -88,17 +94,18 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v1.6 配色。
+**主线**：等 Windows 端实测 v1.7 文字题库导入。
 
-**v1.6 后的候选方向**：
-1. Windows 端实测 `build.bat` 后 exe 是否正确显示轻奢香槟配色
-2. 如果配色仍偏旧，继续只调 `game/theme.py` + `assets/pixel/*.png` 色值，不先动布局
-3. 如果视觉已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
-4. 题库 JSON 自动扫描仍可作为下一个功能方向
+**v1.7 后的候选方向**：
+1. Windows 端实测 `build.bat` 后 exe 是否能通过 `Import` 按钮导入 `.txt` 题库
+2. 继续讨论图片题库：题库 TXT 引用图片文件夹 vs 直接导入图片文件夹
+3. 如果配色仍偏旧，继续只调 `game/theme.py` + `assets/pixel/*.png` 色值，不先动布局
+4. 如果视觉和题库流程已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
 
 ## 版本回滚速查
 
 ```bash
+git reset --hard v1.7          # 文字题库 TXT 导入
 git reset --hard v1.6          # Champagne Farm 轻奢香槟配色
 git reset --hard v1.4-pixel-ui # 像素素材皮肤 + 紧致星露谷风 UI
 git reset --hard v1.3          # 题库保留 + 中途调难度
