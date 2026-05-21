@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-05-22
+
+### v1.9 — 多答案 Normal 模式
+
+**目标**：新增 1/2/3 个正确答案的玩法；杯子数量强制为答案数量 + 2；先做 Normal 规则，即有 N 个答案就有 N 次点击机会，选满后统一判定。
+
+**新建文件**：
+- `docs/superpowers/specs/2026-05-22-v19-multi-answer-normal-mode-design.md` — v1.9 多答案 Normal 模式设计说明
+
+**改造文件**：
+- `game/settings.py` — 将 Cups 滑块替换为 `Correct Answers` 三选一卡片：`1 Ans / 3 Cups`、`2 Ans / 4 Cups`、`3 Ans / 5 Cups`
+- `game/shell_game.py` — 每回合选择 N 个 target items 和 N 个 target cups；支持 N 次点击后统一判分；更新多答案提示文案和选中高亮
+- `game/animations.py` — 新增 `MultiIntroBall`，并排展示多个目标；多目标展示淡出后再盖杯/洗牌，避免答案泄露
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.9 状态、决策和验证
+
+**验证**：
+- 导入兼容检查通过：v1.7 TXT 和 v1.8 图片文件夹扫描仍可用
+- Settings smoke 通过：1/2/3 Answers 分别返回 3/4/5 Cups
+- Gameplay smoke 通过：1/2/3 Answers 全对路径 + 2 Answers 选错路径
+- 多目标 intro 卡片泄露检查通过：展示淡出后才进入盖杯/洗牌
+- `python3 -m compileall main.py game` 通过
+- 已导出 Settings / multi-target intro / guessing 预览图检查视觉
+- Windows 端仍需用户 `git pull` + `build.bat` 实测 exe 真实交互
+
+---
+
 ## 2026-05-21
 
 ### v1.8 — 图片文件夹导入

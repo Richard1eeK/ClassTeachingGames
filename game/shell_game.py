@@ -3,7 +3,7 @@ import random
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
-from game.animations import Cup, AnimationManager, IntroBall
+from game.animations import Cup, AnimationManager, IntroBall, MultiIntroBall
 from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_heart, draw_door
 from game.effects import EffectsManager
 from game.decorations import (
@@ -21,7 +21,8 @@ class ShellGame:
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.settings = settings
-        self.num_cups = settings["num_cups"]
+        self.answer_count = settings.get("answer_count", max(1, settings["num_cups"] - 2))
+        self.num_cups = self.answer_count + 2
         self.num_rounds = settings["num_rounds"]
         self.swap_duration = settings["swap_duration"]
         self.speed_level = settings.get("speed_level", 2)
@@ -34,10 +35,13 @@ class ShellGame:
         self.current_round = 0
         self.score = 0
         self.target_cup = None
+        self.target_cups = []
+        self.target_items = []
         self.target_content = None
         self.target_hint = ""
         self.target_type = "text"
         self.selected_cup = None
+        self.selected_cups = []
         self.show_result = False
         self.result_correct = False
         self.next_btn = None
@@ -78,58 +82,83 @@ class ShellGame:
             return
 
         self._setup_cups()
+        self.selected_cup = None
+        self.selected_cups = []
 
         if self.items:
-            target_item = random.choice(self.items)
+            if len(self.items) >= self.answer_count:
+                target_items = random.sample(self.items, self.answer_count)
+            else:
+                target_items = [random.choice(self.items) for _ in range(self.answer_count)]
         else:
-            target_item = {"type": "text", "content": "?", "hint": ""}
+            target_items = [{"type": "text", "content": "?", "hint": ""} for _ in range(self.answer_count)]
 
-        self.target_content = target_item["content"]
-        self.target_hint = target_item.get("hint", "")
-        self.target_type = target_item["type"]
+        target_indices = random.sample(range(self.num_cups), self.answer_count)
+        self.target_cups = [self.cups[i] for i in target_indices]
+        self.target_cup = self.target_cups[0]
+        self.target_items = []
+        intro_targets = []
 
-        target_idx = random.randint(0, self.num_cups - 1)
-        self.target_cup = self.cups[target_idx]
-        self.target_cup.ball_type = target_item["type"]
-        loaded_image = None
-        if target_item["type"] == "image":
-            try:
-                img = pygame.image.load(target_item["content"])
-                self.target_cup.ball_content = img
-                loaded_image = img
-            except Exception:
-                self.target_cup.ball_type = "text"
-                self.target_cup.ball_content = target_item["content"]
-                self.target_type = "text"
-        else:
-            self.target_cup.ball_content = target_item["content"]
+        for cup, item in zip(self.target_cups, target_items):
+            target_type = item["type"]
+            target_content = item["content"]
+            intro_content = target_content
+            cup.ball_type = target_type
+            if target_type == "image":
+                try:
+                    img = pygame.image.load(target_content)
+                    cup.ball_content = img
+                    intro_content = img
+                except Exception:
+                    target_type = "text"
+                    cup.ball_type = "text"
+                    cup.ball_content = target_content
+                    intro_content = target_content
+            else:
+                cup.ball_content = target_content
+            target = {"type": target_type, "content": intro_content, "hint": item.get("hint", "")}
+            self.target_items.append(target)
+            intro_targets.append(target)
+
+        self.target_content = self.target_items[0]["content"] if self.target_items else "?"
+        self.target_hint = self.target_items[0].get("hint", "") if self.target_items else ""
+        self.target_type = self.target_items[0]["type"] if self.target_items else "text"
 
         self.state = "intro"
         self.intro_active = True
         self.anim = AnimationManager()
         self.next_btn = None
 
-        # Build the intro ball
         ball_radius = min(self.target_cup.width // 3, 35)
-        intro_content = loaded_image if self.target_type == "image" else self.target_content
-        self.intro_ball = IntroBall(
-            x=SCREEN_W // 2,
-            y=SCREEN_H // 2 - 60,
-            base_radius=ball_radius,
-            content=intro_content,
-            content_type=self.target_type,
-        )
+        if self.answer_count == 1:
+            target = intro_targets[0]
+            self.intro_ball = IntroBall(
+                x=SCREEN_W // 2,
+                y=SCREEN_H // 2 - 60,
+                base_radius=ball_radius,
+                content=target["content"],
+                content_type=target["type"],
+            )
+        else:
+            self.intro_ball = MultiIntroBall(
+                x=SCREEN_W // 2,
+                y=SCREEN_H // 2 - 60,
+                base_radius=ball_radius,
+                targets=intro_targets,
+            )
         self.intro_ball.scale = 2.8
         self.intro_ball.alpha = 0.0
         self.intro_ball.visible = False
 
-        # Phase 1: lift cups so empty bottoms show, then show big ball
         self.anim.add_lift(self.cups, 300, 140)
-        self.anim.add_intro_show(self.intro_ball, duration_ms=2000, fade_in_ms=400)
-        # Phase 2: fly ball into target cup, then lower cups
-        self.anim.add_intro_fly(self.intro_ball, self.target_cup, duration_ms=850,
-                                end_scale=1.0, arc_height=160)
-        self.anim.add_pause(150)
+        if self.answer_count > 1:
+            self.anim.add_intro_show(self.intro_ball, duration_ms=2400, fade_in_ms=400, fade_out_ms=350)
+        else:
+            self.anim.add_intro_show(self.intro_ball, duration_ms=2000, fade_in_ms=400)
+        if self.answer_count == 1:
+            self.anim.add_intro_fly(self.intro_ball, self.target_cup, duration_ms=850,
+                                    end_scale=1.0, arc_height=160)
+            self.anim.add_pause(150)
         self.anim.add_lower(self.cups, 320)
         self.anim.add_pause(250)
 
@@ -193,36 +222,55 @@ class ShellGame:
                     cup.x - cup.width // 2, cup.y, cup.width, cup.height
                 )
                 if cup_rect.collidepoint(pos):
+                    if cup in self.selected_cups:
+                        return
+                    self.selected_cups.append(cup)
                     self.selected_cup = cup
-                    self.result_correct = (cup == self.target_cup)
-                    if self.result_correct:
-                        self.score += 1
-                    self.state = "revealing"
-                    self.anim = AnimationManager()
-                    if self.result_correct:
-                        # lift the chosen (== target) cup with glow
-                        self.anim.add_lift([self.target_cup], 350, 140)
-                        self.anim.add_glow(self.target_cup, 1200, peak=1.0)
-                        self.anim.add_pause(1400)
-                        self.effects.burst_correct(cup.x, cup.y + 20)
-                        self.effects.add_text(cup.x, cup.y - 10, "+1 ⭐", T.GOLD_DARK, T.FONT_HEADING)
-                        self.effects.add_flash(T.GOLD_LIGHT, alpha=80)
-                    else:
-                        # shake wrong, then reveal correct
-                        self.anim.add_shake(cup, 500, intensity=12)
-                        self.anim.add_lift([cup], 250, 140)
-                        self.anim.add_pause(300)
-                        self.anim.add_lift([self.target_cup], 350, 140)
-                        self.anim.add_glow(self.target_cup, 1200, peak=0.7)
-                        self.anim.add_pause(1300)
-                        self.effects.burst_wrong(cup.x, cup.y + 20)
-                        self.effects.add_shake(amount=8, duration=240)
+                    self.effects.add_text(
+                        cup.x, cup.y - 8,
+                        f"{len(self.selected_cups)}/{self.answer_count}",
+                        T.SV_BLUE_DARK,
+                        T.FONT_CAPTION,
+                    )
+                    if len(self.selected_cups) >= self.answer_count:
+                        self._resolve_guess()
                     break
 
         elif self.state == "result_shown":
             if self.next_btn and self.next_btn.is_clicked(pos, True):
                 self.current_round += 1
                 self._prepare_round()
+
+    def _resolve_guess(self):
+        selected = set(self.selected_cups)
+        targets = set(self.target_cups)
+        self.result_correct = selected == targets
+        if self.result_correct:
+            self.score += 1
+        self.state = "revealing"
+        self.anim = AnimationManager()
+        if self.result_correct:
+            self.anim.add_lift(self.target_cups, 350, 140)
+            for cup in self.target_cups:
+                self.anim.add_glow(cup, 900, peak=1.0)
+                self.effects.burst_correct(cup.x, cup.y + 20)
+            self.anim.add_pause(1400)
+            self.effects.add_text(SCREEN_W // 2, SCREEN_H // 2 - 10, "+1 ⭐", T.GOLD_DARK, T.FONT_HEADING)
+            self.effects.add_flash(T.GOLD_LIGHT, alpha=80)
+        else:
+            wrong_cups = [cup for cup in self.selected_cups if cup not in targets]
+            for cup in wrong_cups:
+                self.anim.add_shake(cup, 500, intensity=12)
+            if wrong_cups:
+                self.anim.add_lift(wrong_cups, 250, 140)
+                self.anim.add_pause(300)
+            self.anim.add_lift(self.target_cups, 350, 140)
+            for cup in self.target_cups:
+                self.anim.add_glow(cup, 900, peak=0.7)
+            self.anim.add_pause(1300)
+            if wrong_cups:
+                self.effects.burst_wrong(wrong_cups[0].x, wrong_cups[0].y + 20)
+            self.effects.add_shake(amount=8, duration=240)
 
     def _update(self, dt):
         self.anim.update(dt)
@@ -271,7 +319,8 @@ class ShellGame:
             # "Memorize this!" caption while ball is held large at center
             if self.intro_ball.scale > 1.4:
                 cap = render_text_outlined(
-                    "Memorize this!", T.FONT_HEADING, T.GOLD_LIGHT,
+                    "Memorize these!" if self.answer_count > 1 else "Memorize this!",
+                    T.FONT_HEADING, T.GOLD_LIGHT,
                     outline_color=T.WOOD_DARK, outline_w=2, bold=True,
                 )
                 cap.set_alpha(int(255 * self.intro_ball.alpha))
@@ -345,7 +394,7 @@ class ShellGame:
         )
 
         if self.state == "showing":
-            text = "Watch the cup that hides the target..."
+            text = "Watch the cups that hide the targets..." if self.answer_count > 1 else "Watch the cup that hides the target..."
             color = T.TEXT_BROWN
             draw_speech_bubble(surface, bubble_rect, fill=T.PARCHMENT,
                                border=T.WOOD_DARK, tail="bottom")
@@ -358,7 +407,9 @@ class ShellGame:
             ))
 
         elif self.state == "guessing":
-            if self.target_hint:
+            if self.answer_count > 1:
+                text = f"Pick {self.answer_count} cups hiding the targets"
+            elif self.target_hint:
                 text = f"Find: {self.target_hint}"
             elif self.target_content is not None:
                 display = self.target_content if isinstance(self.target_content, str) else "[Image]"
@@ -374,8 +425,14 @@ class ShellGame:
                 bubble_rect.centery - text_surf.get_height() // 2,
             ))
 
+            remaining = self.answer_count - len(self.selected_cups)
+            hint_text = (
+                f"{len(self.selected_cups)} / {self.answer_count} selected — pick {remaining} more"
+                if self.answer_count > 1 else
+                "Click the cup hiding the target"
+            )
             hint = render_text_outlined(
-                "Click the cup hiding the target",
+                hint_text,
                 T.FONT_CAPTION, T.TEXT_MUTED,
                 outline_color=T.CREAM_BG, outline_w=1, bold=False,
             )
@@ -383,11 +440,11 @@ class ShellGame:
 
         elif self.state in ("revealing", "result_shown"):
             if self.result_correct:
-                text = "Correct! Well done!"
+                text = "Correct! You found them all!" if self.answer_count > 1 else "Correct! Well done!"
                 color = T.SV_GREEN_DARK
                 bg_fill = T.PARCHMENT
             else:
-                text = "Not quite — here's the right cup."
+                text = "Not quite — here are the answers." if self.answer_count > 1 else "Not quite — here's the right cup."
                 color = T.SV_RED_DARK
                 bg_fill = T.PARCHMENT
             draw_speech_bubble(surface, bubble_rect, fill=bg_fill,
@@ -411,6 +468,9 @@ class ShellGame:
         pygame.draw.rect(surface, T.WOOD_DARK, shelf_rect, 2)
 
         for cup in self.cups:
+            if cup in self.selected_cups and self.state == "guessing":
+                mark = pygame.Rect(cup.x - cup.width // 2 - 5, cup.y - 5, cup.width + 10, cup.height + 10)
+                pygame.draw.rect(surface, T.SV_BLUE, mark, 4)
             show = (
                 (self.state == "showing" and cup.lifted)
                 or (self.state in ("revealing", "result_shown") and cup.lifted)

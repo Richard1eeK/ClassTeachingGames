@@ -144,6 +144,52 @@ class Cup:
                 surface.blit(scaled, img_rect)
 
 
+class MultiIntroBall:
+    def __init__(self, x, y, base_radius, targets):
+        self.x = x
+        self.y = y
+        self.base_radius = base_radius
+        self.scale = 2.8
+        self.targets = targets
+        self.alpha = 0.0
+        self.visible = False
+
+    def draw(self, surface):
+        if not self.visible or self.alpha <= 0.01:
+            return
+        count = max(1, len(self.targets))
+        radius = int(self.base_radius * self.scale)
+        card_w = max(180, min(260, int(radius * 3.4)))
+        card_h = max(72, int(radius * 1.55))
+        gap = 16
+        total_w = card_w * count + gap * (count - 1)
+        surf = pygame.Surface((total_w + 24, card_h + 28), pygame.SRCALPHA)
+        for i, target in enumerate(self.targets):
+            x = 12 + i * (card_w + gap)
+            y = 8
+            shadow = pygame.Rect(x + 5, y + 7, card_w, card_h)
+            pygame.draw.rect(surf, (*T.SHADOW_DARK, 80), shadow)
+            outer = pygame.Rect(x, y, card_w, card_h)
+            pygame.draw.rect(surf, T.WOOD_DARK, outer)
+            inner = outer.inflate(-12, -12)
+            pygame.draw.rect(surf, TARGET_CARD_FILL, inner)
+            pygame.draw.rect(surf, T.GOLD_DARK, inner, 3)
+            if target["type"] == "text":
+                text_surf = fit_text_surface(
+                    target["content"], inner.width - 10, inner.height - 8,
+                    start_size=max(20, int(radius * 0.72)), min_size=12,
+                )
+                surf.blit(text_surf, text_surf.get_rect(center=inner.center))
+            elif target["type"] == "image" and isinstance(target["content"], pygame.Surface):
+                img = target["content"]
+                iw, ih = img.get_size()
+                scale = min((inner.width - 8) / iw, (inner.height - 8) / ih)
+                scaled = pygame.transform.smoothscale(img, (max(1, int(iw * scale)), max(1, int(ih * scale))))
+                surf.blit(scaled, scaled.get_rect(center=inner.center))
+        surf.set_alpha(int(255 * max(0.0, min(1.0, self.alpha))))
+        surface.blit(surf, (int(self.x - surf.get_width() // 2), int(self.y - surf.get_height() // 2)))
+
+
 class IntroBall:
     """A standalone ball used for the round-intro show + fly-in animation."""
 
@@ -415,6 +461,9 @@ class AnimationManager:
                 ball.visible = False
 
         if t >= 1.0:
+            if anim["type"] == "intro_show" and anim.get("fade_out", 0) > 0:
+                anim["ball"].visible = False
+                anim["ball"].alpha = 0.0
             if anim["type"] == "swap":
                 cup_a = anim["cup_a"]
                 cup_b = anim["cup_b"]

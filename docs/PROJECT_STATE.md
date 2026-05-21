@@ -1,10 +1,10 @@
 # 项目状态 - PROJECT_STATE
 
-> 最后更新：2026-05-21
+> 最后更新：2026-05-22
 
 ## 当前版本
 
-**最新 tag**：`v1.8` — 图片文件夹导入
+**最新 tag**：`v1.9` — 多答案 Normal 模式
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -79,11 +79,18 @@
 - 导入后追加为 image items，设置页保持打开，不自动开始游戏
 - 只扫描所选文件夹第一层，不递归子文件夹
 
+### 多答案 Normal 模式（v1.9）
+- 设置页用 `Correct Answers` 三选一卡片替代 Cups 滑块：`1 Ans / 3 Cups`、`2 Ans / 4 Cups`、`3 Ans / 5 Cups`
+- 杯子数量强制为答案数量 + 2，不再单独调 Cups
+- 每回合随机选 N 个目标和 N 个目标杯，玩家有 N 次点击机会
+- 选满后统一判定：全部选中正确杯子才 +1，否则 reveal 全部正确答案
+- 多目标 intro 用并排白底目标卡展示，展示后淡出再洗牌，避免答案泄露
+
 ## 当前项目状态
 
-- **代码工作目录状态**：v1.8 图片文件夹导入改动完成后需 commit/tag/push
-- **macOS 验证**：图片文件夹扫描样例、`python3 -m compileall main.py game`、`SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <settings smoke>` 通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.8 需要重点确认 exe 中 tkinter 文件夹选择器和图片导入行为
+- **代码工作目录状态**：v1.9 多答案 Normal 模式改动完成后需 commit/tag/push
+- **macOS 验证**：导入兼容、设置页 1/2/3 答案、全对/选错点击路径、`python3 -m compileall main.py game`、headless smoke 均通过；真实窗口仍受本机 pygame/font 限制未跑
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.9 需要重点确认多答案选择、提示文案和动画流程
 - **当前阻塞**：无
 
 ## 未完成 / 待确认
@@ -104,17 +111,18 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v1.8 图片文件夹导入。
+**主线**：等 Windows 端实测 v1.9 多答案 Normal 模式。
 
-**v1.8 后的候选方向**：
-1. Windows 端实测 `build.bat` 后 exe 是否能通过 `Folder` 按钮导入图片文件夹
-2. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
-3. 如果配色仍偏旧，继续只调 `game/theme.py` + `assets/pixel/*.png` 色值，不先动布局
+**v1.9 后的候选方向**：
+1. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
+2. 如果需要更高难度，再加 Strict 模式（点错立即失败）
+3. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
 4. 如果视觉和题库流程已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
 
 ## 版本回滚速查
 
 ```bash
+git reset --hard v1.9          # 多答案 Normal 模式
 git reset --hard v1.8          # 图片文件夹导入
 git reset --hard v1.7.1        # 修复长单词目标牌显示溢出
 git reset --hard v1.7          # 文字题库 TXT 导入
