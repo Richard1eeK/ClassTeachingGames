@@ -25,12 +25,12 @@ class Scoreboard:
         self.ratio = self.score / max(1, self.total)
 
         # Three buttons: Same Again (replay) / Adjust Settings / Quit
-        btn_w = 230
-        btn_h = 64
-        gap = 20
+        btn_w = 210
+        btn_h = 54
+        gap = 18
         total_w = btn_w * 3 + gap * 2
         start_x = SCREEN_W // 2 - total_w // 2
-        btn_y = SCREEN_H - 110
+        btn_y = SCREEN_H - 96
 
         self.replay_btn = Button(start_x, btn_y, btn_w, btn_h,
                                  "Same Again", T.SV_BLUE, T.TEXT_LIGHT,
@@ -42,10 +42,10 @@ class Scoreboard:
                                "Quit", T.SV_RED, T.TEXT_LIGHT,
                                T.FONT_HEADING, icon=draw_door)
 
-        self.title_sign = WoodSign(SCREEN_W // 2 - 240, 60, 480, 80,
+        self.title_sign = WoodSign(SCREEN_W // 2 - 210, 46, 420, 62,
                                    "Game Over!", font_size=T.FONT_TITLE)
 
-        self.decorations = make_floating_decorations(20, SCREEN_W, SCREEN_H, seed=37)
+        self.decorations = make_floating_decorations(10, SCREEN_W, SCREEN_H, seed=37)
 
         self.effects = EffectsManager()
         self.elapsed = 0.0
@@ -113,7 +113,7 @@ class Scoreboard:
         self.title_sign.draw(self.screen)
 
         # Center parchment card
-        card_rect = pygame.Rect(SCREEN_W // 2 - 360, 170, 720, 380)
+        card_rect = pygame.Rect(SCREEN_W // 2 - 330, 150, 660, 350)
         draw_parchment_card(self.screen, card_rect)
 
         self._draw_score(card_rect)
@@ -138,7 +138,7 @@ class Scoreboard:
 
         if scale <= 0.01:
             return
-        font_size = int(72 * scale)
+        font_size = int(62 * scale)
         if font_size < 8:
             return
         text_str = f"{self.score} / {self.total}"
@@ -167,17 +167,17 @@ class Scoreboard:
         ))
 
     def _draw_progress_bar(self, card_rect):
-        bar_w = 480
-        bar_h = 26
+        bar_w = 430
+        bar_h = 22
         bar_x = card_rect.centerx - bar_w // 2
         bar_y = card_rect.y + 230
 
         # frame
         frame = pygame.Rect(bar_x - 4, bar_y - 4, bar_w + 8, bar_h + 8)
-        pygame.draw.rect(self.screen, T.WOOD_DARK, frame, border_radius=15)
-        pygame.draw.rect(self.screen, T.WOOD_BROWN, frame, 2, border_radius=15)
+        pygame.draw.rect(self.screen, T.WOOD_DARK, frame)
+        pygame.draw.rect(self.screen, T.WOOD_BROWN, frame, 2)
         pygame.draw.rect(self.screen, T.PARCHMENT_DARK,
-                         (bar_x, bar_y, bar_w, bar_h), border_radius=12)
+                         (bar_x, bar_y, bar_w, bar_h))
 
         # fill
         t_raw = (self.elapsed - self.bar_anim_start) / self.bar_anim_dur
@@ -195,11 +195,10 @@ class Scoreboard:
                     color = T.SV_RED
                     color_dark = T.SV_RED_DARK
                 pygame.draw.rect(self.screen, color_dark,
-                                 (bar_x, bar_y, fill_w, bar_h), border_radius=12)
+                                 (bar_x, bar_y, fill_w, bar_h))
                 # top highlight
                 pygame.draw.rect(self.screen, color,
-                                 (bar_x + 2, bar_y + 3, max(0, fill_w - 4), bar_h // 2),
-                                 border_radius=10)
+                                 (bar_x + 2, bar_y + 3, max(0, fill_w - 4), bar_h // 2))
 
                 # animated shimmer sweeping across the bar
                 sweep_period = 1500

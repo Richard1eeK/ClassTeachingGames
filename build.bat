@@ -32,7 +32,7 @@ if exist *.spec del /q *.spec
 
 :: 打包
 echo [3/3] 开始打包...
-pyinstaller --onefile --windowed --name "猜杯子游戏" --add-data "data;data" main.py
+pyinstaller --onefile --windowed --name "猜杯子游戏" --add-data "data;data" --add-data "assets;assets" main.py
 
 if %errorlevel% neq 0 (
     echo.

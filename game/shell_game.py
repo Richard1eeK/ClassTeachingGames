@@ -46,7 +46,7 @@ class ShellGame:
 
         # HUD Exit button (placed during _draw_hud now needs Button object for clicks)
         self.exit_btn = Button(
-            SCREEN_W - 130, 26, 100, 40,
+            SCREEN_W - 116, 22, 86, 36,
             "Exit", T.SV_RED, T.TEXT_LIGHT, T.FONT_CAPTION, icon=draw_door,
         )
 
@@ -59,12 +59,13 @@ class ShellGame:
 
     def _setup_cups(self):
         self.cups = []
-        cup_w = min(110, (SCREEN_W - 200) // self.num_cups)
-        cup_h = int(cup_w * 1.4)
-        spacing = cup_w + 30
-        total_width = self.num_cups * cup_w + (self.num_cups - 1) * 30
+        cup_w = min(96, (SCREEN_W - 220) // self.num_cups)
+        cup_h = int(cup_w * 1.25)
+        gap = 24
+        spacing = cup_w + gap
+        total_width = self.num_cups * cup_w + (self.num_cups - 1) * gap
         start_x = (SCREEN_W - total_width) // 2 + cup_w // 2
-        y = SCREEN_H // 2 + 30
+        y = SCREEN_H // 2 + 38
 
         for i in range(self.num_cups):
             x = start_x + i * spacing
@@ -245,7 +246,7 @@ class ShellGame:
             is_last = self.current_round + 1 >= self.num_rounds
             btn_text = "View Results" if is_last else "Next Round"
             self.next_btn = Button(
-                SCREEN_W // 2 - 110, SCREEN_H - 75, 220, 56,
+                SCREEN_W // 2 - 100, SCREEN_H - 76, 200, 50,
                 btn_text, T.SV_GREEN, T.TEXT_LIGHT, T.FONT_HEADING,
             )
 
@@ -292,7 +293,7 @@ class ShellGame:
 
     def _draw_hud(self, surface):
         # Top wood plank with round + score
-        bar = pygame.Rect(40, 18, SCREEN_W - 80, 56)
+        bar = pygame.Rect(34, 14, SCREEN_W - 68, 48)
         draw_wood_plank(surface, bar, color=T.WOOD_BROWN, radius=T.RADIUS_MD)
 
         # Round dots (left)
@@ -304,7 +305,7 @@ class ShellGame:
         )
         surface.blit(round_label, (dot_x, dot_y - round_label.get_height() // 2))
         dot_x += round_label.get_width() + 12
-        dot_r = 9
+        dot_r = 7
         for i in range(self.num_rounds):
             color = T.GOLD if i < self.current_round else (
                 T.GOLD_LIGHT if i == self.current_round else T.PARCHMENT_DARK
@@ -321,7 +322,7 @@ class ShellGame:
             f"Score: {self.score}", T.FONT_BODY, T.TEXT_LIGHT,
             outline_color=T.WOOD_DARK, outline_w=2, bold=True,
         )
-        score_x = bar.right - score_text.get_width() - 180
+        score_x = bar.right - score_text.get_width() - 150
         surface.blit(score_text, (score_x, bar.centery - score_text.get_height() // 2))
         # star icon to right of score
         draw_star(surface, score_x + score_text.get_width() + 18, bar.centery,
@@ -335,11 +336,11 @@ class ShellGame:
         # Speech bubble for status, bobbing slightly
         import math
         bob = int(math.sin(self.bubble_phase) * 3)
-        bubble_w = 460
-        bubble_h = 90
+        bubble_w = 430
+        bubble_h = 74
         bubble_rect = pygame.Rect(
             SCREEN_W // 2 - bubble_w // 2,
-            100 + bob,
+            86 + bob,
             bubble_w, bubble_h,
         )
 
@@ -349,7 +350,7 @@ class ShellGame:
             draw_speech_bubble(surface, bubble_rect, fill=T.PARCHMENT,
                                border=T.WOOD_DARK, tail="bottom")
             draw_eye(surface, bubble_rect.x + 30, bubble_rect.centery, 18, T.TEXT_BROWN)
-            text_surf = render_text_outlined(text, T.FONT_HEADING, color,
+            text_surf = render_text_outlined(text, T.FONT_BODY, color,
                                               outline_color=T.PARCHMENT, outline_w=1, bold=True)
             surface.blit(text_surf, (
                 bubble_rect.centerx - text_surf.get_width() // 2 + 16,
@@ -366,7 +367,7 @@ class ShellGame:
                 text = "Find the target!"
             draw_speech_bubble(surface, bubble_rect, fill=T.PARCHMENT,
                                border=T.WOOD_DARK, tail="bottom")
-            text_surf = render_text_outlined(text, T.FONT_HEADING, T.SV_BLUE_DARK,
+            text_surf = render_text_outlined(text, T.FONT_BODY, T.SV_BLUE_DARK,
                                              outline_color=T.PARCHMENT, outline_w=1, bold=True)
             surface.blit(text_surf, (
                 bubble_rect.centerx - text_surf.get_width() // 2,
@@ -391,7 +392,7 @@ class ShellGame:
                 bg_fill = T.PARCHMENT
             draw_speech_bubble(surface, bubble_rect, fill=bg_fill,
                                border=T.WOOD_DARK, tail="bottom")
-            text_surf = render_text_outlined(text, T.FONT_HEADING, color,
+            text_surf = render_text_outlined(text, T.FONT_BODY, color,
                                              outline_color=T.PARCHMENT, outline_w=1, bold=True)
             tx = bubble_rect.centerx - text_surf.get_width() // 2 + 18
             ty = bubble_rect.centery - text_surf.get_height() // 2
@@ -404,9 +405,10 @@ class ShellGame:
     def _draw_cups(self, surface):
         # Ground line under cups (subtle wood plank shelf)
         ground_y = self.cups[0].y + self.cups[0].height + 12 if self.cups else SCREEN_H - 120
-        shelf_rect = pygame.Rect(60, ground_y, SCREEN_W - 120, 12)
-        pygame.draw.rect(surface, T.WOOD_BROWN, shelf_rect, border_radius=6)
-        pygame.draw.rect(surface, T.WOOD_DARK, shelf_rect, 2, border_radius=6)
+        shelf_rect = pygame.Rect(72, ground_y, SCREEN_W - 144, 10)
+        pygame.draw.rect(surface, T.WOOD_DARK, shelf_rect.move(3, 4))
+        pygame.draw.rect(surface, T.WOOD_BROWN, shelf_rect)
+        pygame.draw.rect(surface, T.WOOD_DARK, shelf_rect, 2)
 
         for cup in self.cups:
             show = (

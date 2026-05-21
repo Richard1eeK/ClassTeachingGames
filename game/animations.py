@@ -1,6 +1,7 @@
 import pygame
 import math
 from game import theme as T
+from game.assets import load_image
 from game.ui_components import get_font
 
 
@@ -64,47 +65,25 @@ class Cup:
             surface.blit(glow_surf, (cx - glow_r, cup_y + self.height // 2 - glow_r),
                          special_flags=pygame.BLEND_PREMULTIPLIED if False else 0)
 
-        top_w = int(self.width * 0.72)
-        # cup body (trapezoid)
-        body_pts = [
-            (cx - self.width // 2, cup_y + self.height),
-            (cx + self.width // 2, cup_y + self.height),
-            (cx + top_w // 2, cup_y),
-            (cx - top_w // 2, cup_y),
-        ]
-        pygame.draw.polygon(surface, self.color, body_pts)
-        # darker shaded right side
-        shade_pts = [
-            (cx + top_w // 4, cup_y),
-            (cx + top_w // 2, cup_y),
-            (cx + self.width // 2, cup_y + self.height),
-            (cx + self.width // 4, cup_y + self.height),
-        ]
-        pygame.draw.polygon(surface, T.CUP_ORANGE_DARK, shade_pts)
-        # outline
-        pygame.draw.polygon(surface, T.WOOD_DARK, body_pts, 3)
+        cup_sprite = load_image("assets", "pixel", "cup.png")
+        if cup_sprite:
+            scaled = pygame.transform.scale(cup_sprite, (self.width, self.height))
+            surface.blit(scaled, (int(cx - self.width // 2), int(cup_y)))
+        else:
+            top_w = int(self.width * 0.72)
+            body_pts = [
+                (cx - self.width // 2, cup_y + self.height),
+                (cx + self.width // 2, cup_y + self.height),
+                (cx + top_w // 2, cup_y),
+                (cx - top_w // 2, cup_y),
+            ]
+            pygame.draw.polygon(surface, self.color, body_pts)
+            pygame.draw.polygon(surface, T.WOOD_DARK, body_pts, 3)
 
-        # rim (top ellipse)
-        rim_rect = pygame.Rect(cx - top_w // 2 - 6, cup_y - 9, top_w + 12, 18)
-        pygame.draw.ellipse(surface, T.CUP_ORANGE_DARK, rim_rect)
-        inner_rim = rim_rect.inflate(-6, -6)
-        pygame.draw.ellipse(surface, T.WOOD_DARK, inner_rim)
-        pygame.draw.ellipse(surface, T.WOOD_DARK, rim_rect, 3)
-
-        # left highlight stripe
-        hl_pts = [
-            (cx - self.width // 3, cup_y + 8),
-            (cx - self.width // 3 + 6, cup_y + 8),
-            (cx - self.width // 3 + 3, cup_y + self.height - 12),
-            (cx - self.width // 3 - 4, cup_y + self.height - 12),
-        ]
-        pygame.draw.polygon(surface, T.CUP_ORANGE_HIGHLIGHT, hl_pts)
-
-        # gold band when glowing
         if self.glow > 0.01:
-            band_rect = pygame.Rect(cx - top_w // 2 - 4, cup_y - 4, top_w + 8, 8)
-            pygame.draw.ellipse(surface, T.GOLD, band_rect)
-            pygame.draw.ellipse(surface, T.GOLD_DARK, band_rect, 2)
+            band_rect = pygame.Rect(cx - int(self.width * 0.38), cup_y + 5, int(self.width * 0.76), 8)
+            pygame.draw.rect(surface, T.GOLD, band_rect)
+            pygame.draw.rect(surface, T.GOLD_DARK, band_rect, 2)
 
         if (show_ball or self.lifted) and self.ball_content is not None:
             self._draw_ball(surface, cx)
@@ -120,9 +99,10 @@ class Cup:
                             (0, 0, ball_radius * 3, ball_radius))
         surface.blit(shadow_surf, (cx - ball_radius * 3 // 2, ball_y + ball_radius // 2))
 
-        pygame.draw.circle(surface, T.PARCHMENT, (cx, ball_y), ball_radius)
-        pygame.draw.circle(surface, T.GOLD_DARK, (cx, ball_y), ball_radius, 3)
-        pygame.draw.circle(surface, T.GOLD, (cx, ball_y), ball_radius - 3, 1)
+        pygame.draw.rect(surface, T.WOOD_DARK, (cx - ball_radius, ball_y - ball_radius, ball_radius * 2, ball_radius * 2))
+        inner = pygame.Rect(cx - ball_radius + 4, ball_y - ball_radius + 4, ball_radius * 2 - 8, ball_radius * 2 - 8)
+        pygame.draw.rect(surface, T.PARCHMENT, inner)
+        pygame.draw.rect(surface, T.GOLD, inner, 2)
 
         if self.ball_content:
             if self.ball_type == "text":
@@ -175,9 +155,11 @@ class IntroBall:
                             (0, 0, radius * 3, radius))
         ball_surf.blit(shadow, (cx - radius * 3 // 2, cy + radius // 2))
 
-        pygame.draw.circle(ball_surf, T.PARCHMENT, (cx, cy), radius)
-        pygame.draw.circle(ball_surf, T.GOLD_DARK, (cx, cy), radius, max(3, radius // 14))
-        pygame.draw.circle(ball_surf, T.GOLD, (cx, cy), radius - max(3, radius // 14), 2)
+        outer = pygame.Rect(cx - radius, cy - radius, radius * 2, radius * 2)
+        pygame.draw.rect(ball_surf, T.WOOD_DARK, outer)
+        inner = outer.inflate(-max(6, radius // 6), -max(6, radius // 6))
+        pygame.draw.rect(ball_surf, T.PARCHMENT, inner)
+        pygame.draw.rect(ball_surf, T.GOLD, inner, max(2, radius // 18))
 
         if self.content is not None:
             if self.content_type == "text":

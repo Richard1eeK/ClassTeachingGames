@@ -1,40 +1,40 @@
 """Stardew Valley inspired theme tokens — colors, spacing, typography, shadows."""
 
-# === Wood / Parchment palette ===
-CREAM_BG = (252, 235, 196)
-CREAM_BG_DARK = (240, 218, 170)
-PARCHMENT = (255, 243, 214)
-PARCHMENT_DARK = (240, 224, 188)
-PARCHMENT_SHADOW = (210, 188, 145)
+# === Pixel wood / parchment palette ===
+CREAM_BG = (214, 150, 82)
+CREAM_BG_DARK = (156, 97, 47)
+PARCHMENT = (243, 207, 139)
+PARCHMENT_DARK = (210, 157, 83)
+PARCHMENT_SHADOW = (154, 98, 50)
 
-WOOD_DARK = (95, 65, 45)
-WOOD_BROWN = (130, 90, 60)
-WOOD_LIGHT = (175, 130, 90)
-WOOD_HIGHLIGHT = (210, 170, 125)
+WOOD_DARK = (70, 38, 20)
+WOOD_BROWN = (126, 74, 34)
+WOOD_LIGHT = (181, 111, 52)
+WOOD_HIGHLIGHT = (218, 151, 75)
 
-GOLD = (245, 200, 80)
-GOLD_DARK = (200, 155, 50)
-GOLD_LIGHT = (255, 230, 140)
+GOLD = (224, 166, 62)
+GOLD_DARK = (151, 95, 36)
+GOLD_LIGHT = (250, 204, 98)
 
 # === Semantic colors ===
-SV_BLUE = (85, 160, 200)
-SV_BLUE_DARK = (55, 120, 165)
-SV_GREEN = (135, 180, 90)
-SV_GREEN_DARK = (95, 140, 60)
-SV_RED = (210, 100, 90)
-SV_RED_DARK = (170, 70, 60)
-SV_PURPLE = (165, 130, 195)
+SV_BLUE = (64, 131, 167)
+SV_BLUE_DARK = (39, 83, 115)
+SV_GREEN = (79, 143, 73)
+SV_GREEN_DARK = (43, 83, 43)
+SV_RED = (178, 75, 61)
+SV_RED_DARK = (115, 47, 42)
+SV_PURPLE = (121, 81, 154)
 
-# === Cup (keep orange but warmer) ===
-CUP_ORANGE = (235, 145, 75)
-CUP_ORANGE_DARK = (190, 105, 50)
-CUP_ORANGE_HIGHLIGHT = (255, 195, 130)
+# === Cup ===
+CUP_ORANGE = (219, 115, 54)
+CUP_ORANGE_DARK = (158, 70, 36)
+CUP_ORANGE_HIGHLIGHT = (242, 157, 82)
 
 # === Text ===
-TEXT_DARK = (75, 55, 40)
-TEXT_BROWN = (110, 80, 55)
-TEXT_LIGHT = (255, 248, 230)
-TEXT_MUTED = (155, 130, 100)
+TEXT_DARK = (58, 35, 22)
+TEXT_BROWN = (89, 58, 34)
+TEXT_LIGHT = (255, 232, 183)
+TEXT_MUTED = (128, 88, 53)
 
 # === Legacy aliases (so existing code keeps working during migration) ===
 BG_COLOR = CREAM_BG
@@ -58,23 +58,23 @@ SCREEN_H = 768
 # === Spacing scale ===
 SPACE_XS = 4
 SPACE_SM = 8
-SPACE_MD = 16
-SPACE_LG = 24
-SPACE_XL = 40
-SPACE_XXL = 64
+SPACE_MD = 12
+SPACE_LG = 16
+SPACE_XL = 24
+SPACE_XXL = 36
 
-# === Radius ===
-RADIUS_SM = 8
-RADIUS_MD = 16
-RADIUS_LG = 24
-RADIUS_XL = 32
+# === Radius (kept tiny for old fallback paths) ===
+RADIUS_SM = 0
+RADIUS_MD = 2
+RADIUS_LG = 4
+RADIUS_XL = 6
 
 # === Typography (size scale) ===
-FONT_DISPLAY = 56
-FONT_TITLE = 40
-FONT_HEADING = 32
-FONT_BODY = 24
-FONT_CAPTION = 18
+FONT_DISPLAY = 48
+FONT_TITLE = 34
+FONT_HEADING = 26
+FONT_BODY = 20
+FONT_CAPTION = 15
 
 # === Shadow (offset, blur-ish via repeated draw) ===
 SHADOW_SM = (0, 2)

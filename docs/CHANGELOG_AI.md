@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-05-21
+
+### v1.4-pixel-ui — 像素素材皮肤 + 紧致星露谷风 UI
+
+**目标**：用户反馈当前 UI 只是"简陋模仿"，要求更紧致，并且真正靠近星露谷 / cozy farming pixel game 的视觉语言。
+
+**新建文件**：
+- `game/assets.py` — 统一处理 PyInstaller `_MEIPASS` 资源路径、PNG 加载缓存、tile 绘制、9-slice 拉伸
+- `assets/pixel/*.png` — 本地生成的像素素材：木纹 tile、羊皮纸 tile、9-slice 面板、木牌、按钮、输入框、杯子 sprite、叶子装饰
+
+**改造文件**：
+- `game/theme.py` — 色板改为更低色阶的像素木质 / 羊皮纸 palette；spacing 和字体阶梯整体收紧；radius 降到硬边为主
+- `game/decorations.py` — 背景改 tile 木纹；面板、木牌、对话框改 9-slice 像素边框；阴影从柔光改块状偏移
+- `game/ui_components.py` — Button / Slider / TextInput 改为像素按钮、硬边滑轨、像素输入框
+- `game/animations.py` — Cup 绘制优先使用 `assets/pixel/cup.png` sprite；目标球改成方形像素牌风格
+- `game/settings.py` — 设置页双面板压缩，输入栏、图片按钮、列表行和速度图标区更紧凑
+- `game/shell_game.py` — HUD、Exit、提示框、杯子尺寸和底座收紧
+- `game/scoreboard.py` — 结算卡片、按钮、分数和进度条收紧，进度条改硬边像素风
+- `build.bat` — 增加 `--add-data "assets;assets"`，Windows exe 打包包含字体和像素素材
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.4 状态、决策和验证
+
+**验证**：
+- `python3 -m compileall main.py game` 通过
+- `SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <smoke>` 通过：素材加载、9-slice、Settings/ShellGame/Scoreboard 三屏绘制正常
+- Windows 端仍需用户 `git pull` + `build.bat` 实测 exe 视觉和资源加载
+
+---
+
 ## 2026-05-20
 
 今天连续完成 4 个版本（v1.0-stardew → v1.1 → v1.2 → v1.3），加 1 个 statusLine 配置 + 多次 CLAUDE.md 更新。本次会话进入收尾，整理项目记忆。

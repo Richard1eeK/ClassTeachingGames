@@ -7,58 +7,38 @@ import pygame
 import math
 import random
 from game import theme as T
+from game.assets import load_image, draw_tiled, draw_nineslice
 
 
 _bg_cache = {}
 
 
 def get_wood_background(w, h, seed=42):
-    """Cached cream wood-plank background. Returns a Surface."""
+    """Cached pixel wood-plank background. Returns a Surface."""
     key = ("wood_bg", w, h, seed)
     if key in _bg_cache:
         return _bg_cache[key]
 
     surf = pygame.Surface((w, h)).convert()
-    surf.fill(T.CREAM_BG)
+    tile = load_image("assets", "pixel", "wood_tile.png")
+    if tile:
+        draw_tiled(surf, pygame.Rect(0, 0, w, h), tile)
+    else:
+        surf.fill(T.CREAM_BG_DARK)
 
     rng = random.Random(seed)
+    plank_h = 64
+    for y in range(0, h, plank_h):
+        pygame.draw.line(surf, T.WOOD_DARK, (0, y), (w, y), 3)
+        pygame.draw.line(surf, T.WOOD_HIGHLIGHT, (0, y + 3), (w, y + 3), 1)
+        for _ in range(4):
+            gy = y + rng.randint(10, max(12, plank_h - 10))
+            gx = rng.randint(0, max(1, w - 120))
+            pygame.draw.line(surf, T.WOOD_DARK, (gx, gy), (min(w, gx + rng.randint(40, 130)), gy), 2)
 
-    # subtle horizontal wood-grain bands
-    plank_h = 90
-    y = 0
-    band_idx = 0
-    while y < h:
-        shade = T.CREAM_BG if band_idx % 2 == 0 else T.CREAM_BG_DARK
-        pygame.draw.rect(surf, shade, (0, y, w, plank_h))
-        # plank divider line (very faint)
-        pygame.draw.line(surf, T.PARCHMENT_SHADOW, (0, y), (w, y), 1)
-        # grain lines
-        for _ in range(3):
-            gy = y + rng.randint(8, plank_h - 8)
-            gx_start = rng.randint(0, w // 4)
-            gx_end = w - rng.randint(0, w // 4)
-            grain_color = (T.CREAM_BG_DARK[0] - 8, T.CREAM_BG_DARK[1] - 8, T.CREAM_BG_DARK[2] - 8)
-            pygame.draw.line(surf, grain_color, (gx_start, gy), (gx_end, gy), 1)
-        # occasional wood knot
-        if rng.random() < 0.35:
-            kx = rng.randint(80, w - 80)
-            ky = y + rng.randint(20, plank_h - 20)
-            kr = rng.randint(6, 12)
-            pygame.draw.ellipse(surf, T.WOOD_LIGHT, (kx - kr, ky - kr // 2, kr * 2, kr))
-            pygame.draw.ellipse(surf, T.WOOD_BROWN, (kx - kr + 2, ky - kr // 2 + 1, kr * 2 - 4, kr - 2), 1)
-        y += plank_h
-        band_idx += 1
-
-    # vignette: very subtle dark corners
     vignette = pygame.Surface((w, h), pygame.SRCALPHA)
-    for i in range(40):
-        alpha = int(40 * (i / 40))
-        pygame.draw.rect(
-            vignette,
-            (60, 40, 20, max(0, 25 - alpha)),
-            (i, i, w - i * 2, h - i * 2),
-            1,
-        )
+    for i in range(0, 44, 4):
+        pygame.draw.rect(vignette, (34, 20, 12, 18), (i, i, w - i * 2, h - i * 2), 4)
     surf.blit(vignette, (0, 0))
 
     _bg_cache[key] = surf
@@ -68,47 +48,24 @@ def get_wood_background(w, h, seed=42):
 def draw_parchment_card(surface, rect, fill=T.PARCHMENT, border_outer=T.WOOD_DARK,
                        border_inner=T.GOLD, radius=T.RADIUS_LG, shadow=True,
                        rivets=True):
-    """Draw a parchment card with double border (outer wood, inner gold) and corner rivets."""
+    """Draw a pixel parchment panel with a 9-slice wood frame."""
     if shadow:
-        shadow_rect = rect.move(0, 5)
-        shadow_surf = pygame.Surface((rect.width + 12, rect.height + 12), pygame.SRCALPHA)
-        for i in range(6):
-            alpha = 18 - i * 2
-            pygame.draw.rect(
-                shadow_surf,
-                (40, 25, 15, max(0, alpha)),
-                (6 - i, 6 - i, rect.width + i * 2, rect.height + i * 2),
-                border_radius=radius + i,
-            )
-        surface.blit(shadow_surf, (rect.x - 6, rect.y - 1))
+        pygame.draw.rect(surface, (43, 25, 15), rect.move(6, 7))
 
-    # main fill
-    pygame.draw.rect(surface, fill, rect, border_radius=radius)
+    if draw_nineslice(surface, rect, "panel_9slice.png", border=12):
+        paper_tile = load_image("assets", "pixel", "parchment_tile.png")
+        if paper_tile:
+            inner = rect.inflate(-26, -26)
+            draw_tiled(surface, inner, paper_tile)
+            pygame.draw.rect(surface, T.WOOD_DARK, inner, 2)
+        return
 
-    # paper texture: random faint dots
-    # (skip per-frame randomness — would flicker; use deterministic pattern)
+    pygame.draw.rect(surface, fill, rect)
     texture_overlay = _get_parchment_texture(rect.width, rect.height, radius)
     surface.blit(texture_overlay, rect.topleft)
-
-    # outer border (wood)
-    pygame.draw.rect(surface, border_outer, rect, 4, border_radius=radius)
-    # inner border (gold), inset by 4px
-    inner = rect.inflate(-8, -8)
-    pygame.draw.rect(surface, border_inner, inner, 2, border_radius=max(2, radius - 4))
-
-    if rivets:
-        rivet_inset = 14
-        rivet_color = T.GOLD_DARK
-        rivet_highlight = T.GOLD_LIGHT
-        for cx, cy in [
-            (rect.left + rivet_inset, rect.top + rivet_inset),
-            (rect.right - rivet_inset, rect.top + rivet_inset),
-            (rect.left + rivet_inset, rect.bottom - rivet_inset),
-            (rect.right - rivet_inset, rect.bottom - rivet_inset),
-        ]:
-            pygame.draw.circle(surface, T.WOOD_DARK, (cx, cy), 5)
-            pygame.draw.circle(surface, rivet_color, (cx, cy), 4)
-            pygame.draw.circle(surface, rivet_highlight, (cx - 1, cy - 1), 1)
+    pygame.draw.rect(surface, border_outer, rect, 6)
+    inner = rect.inflate(-12, -12)
+    pygame.draw.rect(surface, border_inner, inner, 2)
 
 
 _parchment_texture_cache = {}
@@ -136,51 +93,38 @@ def _get_parchment_texture(w, h, radius):
 
 def draw_wood_plank(surface, rect, color=T.WOOD_BROWN, dark=T.WOOD_DARK,
                     light=T.WOOD_HIGHLIGHT, radius=T.RADIUS_MD, shadow=True):
-    """Wood plank panel — used for HUD bars, buttons backgrounds."""
+    """Pixel wood plank panel — used for HUD bars and signs."""
     if shadow:
-        shadow_rect = rect.move(0, 4)
-        shadow_surf = pygame.Surface((rect.width + 8, rect.height + 8), pygame.SRCALPHA)
-        for i in range(4):
-            alpha = 22 - i * 4
-            pygame.draw.rect(
-                shadow_surf,
-                (30, 18, 10, max(0, alpha)),
-                (4 - i, 4 - i, rect.width + i * 2, rect.height + i * 2),
-                border_radius=radius + i,
-            )
-        surface.blit(shadow_surf, (rect.x - 4, rect.y))
+        pygame.draw.rect(surface, (43, 25, 15), rect.move(4, 5))
 
-    pygame.draw.rect(surface, color, rect, border_radius=radius)
-    # top highlight
-    highlight_rect = pygame.Rect(rect.x + 4, rect.y + 3, rect.width - 8, max(2, rect.height // 5))
-    pygame.draw.rect(surface, light, highlight_rect, border_radius=max(2, radius - 4))
-    # bottom shadow
-    bottom_rect = pygame.Rect(rect.x + 4, rect.bottom - rect.height // 4, rect.width - 8, rect.height // 5)
-    pygame.draw.rect(surface, dark, bottom_rect, border_radius=max(2, radius - 4))
-    # outline
-    pygame.draw.rect(surface, dark, rect, 2, border_radius=radius)
+    if draw_nineslice(surface, rect, "wood_sign_9slice.png", border=8):
+        return
+
+    pygame.draw.rect(surface, dark, rect)
+    inner = rect.inflate(-8, -8)
+    pygame.draw.rect(surface, color, inner)
+    pygame.draw.line(surface, light, (inner.left, inner.top), (inner.right, inner.top), 2)
+    pygame.draw.line(surface, dark, (inner.left, inner.bottom), (inner.right, inner.bottom), 2)
 
 
 def draw_speech_bubble(surface, rect, fill=T.PARCHMENT, border=T.WOOD_DARK,
                       tail="bottom", radius=T.RADIUS_LG):
-    """Rounded bubble with a small tail."""
-    pygame.draw.rect(surface, fill, rect, border_radius=radius)
-    pygame.draw.rect(surface, border, rect, 3, border_radius=radius)
+    """Pixel dialogue box with a small blocky tail."""
+    draw_parchment_card(surface, rect, shadow=True, rivets=False)
 
+    cx = rect.centerx
     if tail == "bottom":
-        cx = rect.centerx
-        ty = rect.bottom
-        tail_pts = [(cx - 12, ty - 2), (cx + 12, ty - 2), (cx - 4, ty + 14)]
-        pygame.draw.polygon(surface, fill, tail_pts)
-        pygame.draw.line(surface, border, (cx - 12, ty - 1), (cx - 4, ty + 14), 3)
-        pygame.draw.line(surface, border, (cx + 12, ty - 1), (cx - 4, ty + 14), 3)
+        ty = rect.bottom - 2
+        tail_pts = [(cx - 14, ty), (cx + 10, ty), (cx - 2, ty + 14)]
+        pygame.draw.polygon(surface, border, tail_pts)
+        inner = [(cx - 8, ty), (cx + 4, ty), (cx - 2, ty + 7)]
+        pygame.draw.polygon(surface, fill, inner)
     elif tail == "top":
-        cx = rect.centerx
-        ty = rect.top
-        tail_pts = [(cx - 12, ty + 2), (cx + 12, ty + 2), (cx + 4, ty - 14)]
-        pygame.draw.polygon(surface, fill, tail_pts)
-        pygame.draw.line(surface, border, (cx - 12, ty + 1), (cx + 4, ty - 14), 3)
-        pygame.draw.line(surface, border, (cx + 12, ty + 1), (cx + 4, ty - 14), 3)
+        ty = rect.top + 2
+        tail_pts = [(cx - 10, ty), (cx + 14, ty), (cx + 2, ty - 14)]
+        pygame.draw.polygon(surface, border, tail_pts)
+        inner = [(cx - 4, ty), (cx + 8, ty), (cx + 2, ty - 7)]
+        pygame.draw.polygon(surface, fill, inner)
 
 
 def draw_acorn(surface, x, y, size, color=T.WOOD_BROWN):

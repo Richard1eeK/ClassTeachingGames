@@ -42,23 +42,24 @@ class SettingsScreen:
         init_items = list(init.get("items", []))
 
         # Left card: Cups / Rounds / Speed
-        self.left_card = Card(60, 150, 460, 540, title="Game Settings")
-        self.cup_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 100,
-                                 self.left_card.rect.width - 80, 3, 7, init_cups, "Cups")
-        self.round_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 200,
-                                   self.left_card.rect.width - 80, 3, 20, init_rounds, "Rounds")
-        self.speed_slider = Slider(self.left_card.rect.x + 40, self.left_card.rect.y + 320,
-                                   self.left_card.rect.width - 80, 1, 5, init_speed, "Speed")
+        self.left_card = Card(50, 130, 430, 510, title="Game Settings")
+        self.cup_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 82,
+                                 self.left_card.rect.width - 68, 3, 7, init_cups, "Cups")
+        self.round_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 172,
+                                   self.left_card.rect.width - 68, 3, 20, init_rounds, "Rounds")
+        self.speed_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 282,
+                                   self.left_card.rect.width - 68, 1, 5, init_speed, "Speed")
 
         # Right card: content
-        self.right_card = Card(SCREEN_W - 520, 150, 460, 540, title="Your Items")
+        self.right_card = Card(SCREEN_W - 480, 130, 430, 510, title="Your Items")
         self.text_input = TextInput(
-            self.right_card.rect.x + 30, self.right_card.rect.y + 80,
-            self.right_card.rect.width - 180, 50, "Type a word and press Enter"
+            self.right_card.rect.x + 26, self.right_card.rect.y + 70,
+            self.right_card.rect.width - 160, 44, "Type a word and press Enter",
+            font_size=T.FONT_CAPTION,
         )
         self.add_image_btn = Button(
-            self.right_card.rect.right - 130, self.right_card.rect.y + 80,
-            110, 50, "Image", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_BODY,
+            self.right_card.rect.right - 122, self.right_card.rect.y + 70,
+            96, 44, "Image", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
             icon=draw_image_icon,
         )
 
@@ -67,13 +68,13 @@ class SettingsScreen:
         self._delete_btn_rects = []  # tuples of (rect, item_index)
 
         # Hanging title sign
-        self.title_sign = WoodSign(SCREEN_W // 2 - 280, 50, 560, 80,
+        self.title_sign = WoodSign(SCREEN_W // 2 - 240, 44, 480, 62,
                                    "Shell Cup Game", font_size=T.FONT_TITLE)
 
-        self.start_btn = Button(SCREEN_W // 2 - 130, SCREEN_H - 80, 260, 60,
+        self.start_btn = Button(SCREEN_W // 2 - 120, SCREEN_H - 94, 240, 54,
                                 "Start Game!", T.SV_GREEN, T.TEXT_LIGHT, T.FONT_HEADING)
 
-        self.decorations = make_floating_decorations(16, SCREEN_W, SCREEN_H, seed=11)
+        self.decorations = make_floating_decorations(8, SCREEN_W, SCREEN_H, seed=11)
 
         self.speed_labels = {1: "Slow", 2: "Medium", 3: "Fast", 4: "Ultra", 5: "Insane"}
 
@@ -198,7 +199,7 @@ class SettingsScreen:
 
     def _draw_speed_icons(self):
         slider = self.speed_slider
-        y = slider.y + 60
+        y = slider.y + 52
         track_x = slider.x
         track_w = slider.w
         for value, label, icon_fn, color in SPEED_ICONS:
@@ -207,8 +208,8 @@ class SettingsScreen:
             selected = (value == slider.value)
             size = 14 if selected else 11
             if selected:
-                pygame.draw.circle(self.screen, T.GOLD_LIGHT, (cx, y), 22)
-                pygame.draw.circle(self.screen, T.GOLD_DARK, (cx, y), 22, 2)
+                pygame.draw.rect(self.screen, T.GOLD_LIGHT, (cx - 18, y - 18, 36, 36))
+                pygame.draw.rect(self.screen, T.GOLD_DARK, (cx - 18, y - 18, 36, 36), 2)
             icon_fn(self.screen, cx, y, size, color)
             if selected:
                 lbl = render_text_outlined(label, T.FONT_CAPTION, T.TEXT_DARK,
@@ -217,17 +218,17 @@ class SettingsScreen:
 
     def _draw_items_list(self):
         self._delete_btn_rects = []
-        list_top = self.right_card.rect.y + 160
-        list_bottom = self.right_card.rect.bottom - 30
-        list_left = self.right_card.rect.x + 30
-        list_right = self.right_card.rect.right - 30
+        list_top = self.right_card.rect.y + 130
+        list_bottom = self.right_card.rect.bottom - 24
+        list_left = self.right_card.rect.x + 26
+        list_right = self.right_card.rect.right - 26
         # clipping region
         clip_rect = pygame.Rect(list_left, list_top,
                                 list_right - list_left, list_bottom - list_top)
         prev_clip = self.screen.get_clip()
         self.screen.set_clip(clip_rect)
 
-        item_h = 44
+        item_h = 38
         if not self.manual_items:
             hint = render_text_outlined(
                 "Add at least 1 item to start.",
@@ -246,9 +247,9 @@ class SettingsScreen:
                 row_y = list_top + i * item_h - self.scroll_offset
                 if row_y + item_h < list_top or row_y > list_bottom:
                     continue
-                row_rect = pygame.Rect(list_left, row_y, list_right - list_left, item_h - 6)
-                pygame.draw.rect(self.screen, T.PARCHMENT_DARK, row_rect, border_radius=8)
-                pygame.draw.rect(self.screen, T.WOOD_BROWN, row_rect, 1, border_radius=8)
+                row_rect = pygame.Rect(list_left, row_y, list_right - list_left, item_h - 5)
+                pygame.draw.rect(self.screen, T.WOOD_DARK, row_rect)
+                pygame.draw.rect(self.screen, T.PARCHMENT_DARK, row_rect.inflate(-4, -4))
 
                 # type icon
                 icon_x = row_rect.x + 22
@@ -266,7 +267,7 @@ class SettingsScreen:
                 if len(display) > 22:
                     display = display[:21] + "…"
                 txt = render_text_outlined(
-                    f"{i + 1}. {display}", T.FONT_BODY, T.TEXT_DARK,
+                    f"{i + 1}. {display}", T.FONT_CAPTION, T.TEXT_DARK,
                     outline_color=T.PARCHMENT_DARK, outline_w=1, bold=False,
                 )
                 self.screen.blit(txt, (icon_x + 22, row_rect.centery - txt.get_height() // 2))
@@ -274,9 +275,9 @@ class SettingsScreen:
                 # delete button
                 del_x = row_rect.right - 24
                 del_y = row_rect.centery
-                del_rect = pygame.Rect(del_x - 16, del_y - 14, 32, 28)
-                pygame.draw.rect(self.screen, T.SV_RED, del_rect, border_radius=6)
-                pygame.draw.rect(self.screen, T.WOOD_DARK, del_rect, 1, border_radius=6)
+                del_rect = pygame.Rect(del_x - 14, del_y - 12, 28, 24)
+                pygame.draw.rect(self.screen, T.WOOD_DARK, del_rect)
+                pygame.draw.rect(self.screen, T.SV_RED, del_rect.inflate(-4, -4))
                 draw_trash(self.screen, del_x, del_y, 8)
                 self._delete_btn_rects.append((del_rect, i))
 

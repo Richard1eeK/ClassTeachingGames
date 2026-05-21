@@ -10,6 +10,7 @@ from game.theme import (
     CANDY_PINK, CANDY_BLUE, CANDY_GREEN, CANDY_YELLOW,
     CANDY_PURPLE, CANDY_ORANGE, CANDY_RED, CUP_COLOR,
 )
+from game.assets import draw_nineslice
 from game.decorations import draw_wood_plank, draw_parchment_card
 
 
@@ -96,61 +97,49 @@ class Button:
 
     def draw(self, surface):
         rect = self.rect.copy()
-        # press depth offset
-        offset = int(4 * self._press_anim)
+        offset = int(3 * self._press_anim)
         rect.y += offset
 
-        color = self.color
-        if not self.enabled:
-            color = T.PARCHMENT_SHADOW
-            light = T.PARCHMENT_DARK
-            dark = T.WOOD_LIGHT
-        else:
-            color = self.light if self.hovered else self.color
-            light = self._lighten(color, 1.18)
-            dark = self._darken(color, 0.6)
-
-        # shadow (skip when pressed for press-down effect)
         if not self.pressed and self.enabled:
-            shadow_surf = pygame.Surface((rect.width + 8, rect.height + 8), pygame.SRCALPHA)
-            for i in range(4):
-                a = 28 - i * 6
-                pygame.draw.rect(
-                    shadow_surf,
-                    (30, 18, 10, max(0, a)),
-                    (4 - i, 4 - i, rect.width + i * 2, rect.height + i * 2),
-                    border_radius=T.RADIUS_MD + i,
-                )
-            surface.blit(shadow_surf, (rect.x - 4, rect.y))
+            pygame.draw.rect(surface, (43, 25, 15), rect.move(4, 5))
 
-        # body
-        pygame.draw.rect(surface, color, rect, border_radius=T.RADIUS_MD)
-        # top highlight
-        hl = pygame.Rect(rect.x + 4, rect.y + 3, rect.width - 8, max(2, rect.height // 4))
-        pygame.draw.rect(surface, light, hl, border_radius=T.RADIUS_SM)
-        # bottom shade
-        sh = pygame.Rect(rect.x + 4, rect.bottom - rect.height // 5, rect.width - 8, rect.height // 6)
-        pygame.draw.rect(surface, dark, sh, border_radius=T.RADIUS_SM)
-        # outline
-        pygame.draw.rect(surface, T.WOOD_DARK, rect, 3, border_radius=T.RADIUS_MD)
+        asset = self._asset_name()
+        if not self.enabled:
+            pygame.draw.rect(surface, T.WOOD_DARK, rect)
+            pygame.draw.rect(surface, T.PARCHMENT_SHADOW, rect.inflate(-6, -6))
+        elif not draw_nineslice(surface, rect, asset, border=8):
+            color = self.light if self.hovered else self.color
+            pygame.draw.rect(surface, T.WOOD_DARK, rect)
+            pygame.draw.rect(surface, color, rect.inflate(-6, -6))
 
-        # text + optional icon
+        if self.hovered and self.enabled:
+            pygame.draw.rect(surface, T.GOLD_LIGHT, rect.inflate(-4, -4), 2)
+
         text_color = self.text_color if self.enabled else T.TEXT_MUTED
         text_surf = render_text_outlined(self.text, self.font_size, text_color,
                                          outline_color=T.WOOD_DARK, outline_w=2, bold=True)
         tw = text_surf.get_width()
         if self.icon:
             icon_size = max(10, self.font_size // 2)
-            total_w = tw + icon_size * 2 + 12
+            total_w = tw + icon_size * 2 + 10
             icon_x = rect.centerx - total_w // 2 + icon_size
             icon_y = rect.centery
             self.icon(surface, icon_x, icon_y, icon_size, text_color)
-            text_x = icon_x + icon_size + 8
+            text_x = icon_x + icon_size + 7
             text_y = rect.centery - text_surf.get_height() // 2
             surface.blit(text_surf, (text_x, text_y))
         else:
             surface.blit(text_surf, (rect.centerx - tw // 2,
                                      rect.centery - text_surf.get_height() // 2))
+
+    def _asset_name(self):
+        if self.color == T.SV_RED:
+            return "button_red_9slice.png"
+        if self.color == T.SV_GREEN:
+            return "button_green_9slice.png"
+        if self.color == T.GOLD:
+            return "button_gold_9slice.png"
+        return "button_blue_9slice.png"
 
     def update(self, mouse_pos, dt=16):
         self.hovered = self.rect.collidepoint(mouse_pos) and self.enabled
@@ -176,32 +165,28 @@ class Slider:
         self.knob_radius = 16
 
     def draw(self, surface):
-        font = get_font(T.FONT_BODY, bold=True)
         label_surf = render_text_outlined(
             f"{self.label}: {self.value}", T.FONT_BODY, T.TEXT_LIGHT,
             outline_color=T.WOOD_DARK, outline_w=2, bold=True
         )
-        surface.blit(label_surf, (self.x - 2, self.y - 34))
+        surface.blit(label_surf, (self.x - 2, self.y - 30))
 
         track_y = self.y + self.h // 2
-        # track shadow
-        pygame.draw.line(surface, T.WOOD_DARK, (self.x, track_y + 2),
-                         (self.x + self.w, track_y + 2), 8)
-        # track base
-        pygame.draw.line(surface, T.WOOD_LIGHT, (self.x, track_y),
-                         (self.x + self.w, track_y), 6)
+        track_rect = pygame.Rect(self.x, track_y - 6, self.w, 12)
+        pygame.draw.rect(surface, T.WOOD_DARK, track_rect.move(2, 3))
+        pygame.draw.rect(surface, T.WOOD_DARK, track_rect)
+        pygame.draw.rect(surface, T.WOOD_LIGHT, track_rect.inflate(-4, -4))
         ratio = (self.value - self.min_val) / max(1, self.max_val - self.min_val)
         knob_x = self.x + int(ratio * self.w)
-        # filled portion (gold)
-        if knob_x > self.x:
-            pygame.draw.line(surface, T.GOLD, (self.x, track_y), (knob_x, track_y), 6)
+        if knob_x > self.x + 4:
+            pygame.draw.rect(surface, T.GOLD, (self.x + 3, track_y - 3, knob_x - self.x - 3, 6))
 
-        # knob (gold coin style)
-        pygame.draw.circle(surface, T.WOOD_DARK, (knob_x, track_y + 2), self.knob_radius)
-        pygame.draw.circle(surface, T.GOLD_DARK, (knob_x, track_y), self.knob_radius)
-        pygame.draw.circle(surface, T.GOLD, (knob_x, track_y), self.knob_radius - 2)
-        pygame.draw.circle(surface, T.GOLD_LIGHT, (knob_x - 4, track_y - 4), self.knob_radius // 3)
-        pygame.draw.circle(surface, T.WOOD_DARK, (knob_x, track_y), self.knob_radius, 2)
+        knob = pygame.Rect(knob_x - 13, track_y - 13, 26, 26)
+        pygame.draw.rect(surface, T.WOOD_DARK, knob.move(2, 3))
+        pygame.draw.rect(surface, T.GOLD_DARK, knob)
+        pygame.draw.rect(surface, T.GOLD, knob.inflate(-4, -4))
+        pygame.draw.line(surface, T.GOLD_LIGHT, (knob.left + 5, knob.top + 5), (knob.right - 6, knob.top + 5), 2)
+        pygame.draw.rect(surface, T.WOOD_DARK, knob, 2)
 
     def handle_event(self, event):
         track_y = self.y + self.h // 2
@@ -240,11 +225,12 @@ class TextInput:
         self.cursor_timer = 0
 
     def draw(self, surface):
-        # parchment-ish input
-        fill = T.PARCHMENT if self.active else T.PARCHMENT_DARK
-        pygame.draw.rect(surface, fill, self.rect, border_radius=T.RADIUS_MD)
-        border = T.GOLD_DARK if self.active else T.WOOD_BROWN
-        pygame.draw.rect(surface, border, self.rect, 3, border_radius=T.RADIUS_MD)
+        if not draw_nineslice(surface, self.rect, "input_9slice.png", border=8):
+            fill = T.PARCHMENT if self.active else T.PARCHMENT_DARK
+            pygame.draw.rect(surface, T.WOOD_DARK, self.rect)
+            pygame.draw.rect(surface, fill, self.rect.inflate(-6, -6))
+        if self.active:
+            pygame.draw.rect(surface, T.GOLD_LIGHT, self.rect.inflate(-4, -4), 2)
 
         font = get_font(self.font_size)
         if self.text:

@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v1.3` — 题库保留 + 中途调难度
+**最新 tag**：`v1.4-pixel-ui` — 像素素材皮肤 + 紧致星露谷风 UI
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -50,20 +50,24 @@
 - 新增齿轮图标 `draw_gear` 用于 Adjust 按钮
 - 老师中途想换难度不用再重新录题；想直接重玩也只需一个点击
 
+### 视觉升级（v1.4-pixel-ui）
+- 引入本地像素 PNG 素材：木纹 tile、羊皮纸 tile、9-slice 面板、木牌、按钮、输入框、杯子 sprite
+- 新增 `game/assets.py` 统一处理 PyInstaller `_MEIPASS` 资源路径、PNG 加载、tile 绘制和 9-slice 拉伸
+- `build.bat` 已加入 `--add-data "assets;assets"`，Windows exe 能带上像素素材和字体
+- 三屏布局更紧致：设置页双面板压缩、游戏 HUD 和提示框变薄、结算页卡片和按钮收紧
+- 核心绘制从现代圆角/柔光转为硬边像素边框、块状阴影和有限色阶
+
 ## 当前项目状态
 
-- **代码工作目录干净**：所有改动已 push
+- **代码工作目录状态**：v1.4-pixel-ui 改动完成后需 commit/tag/push
 - **macOS 验证**：headless smoke test 全过；视觉验证因 Python 3.14 的 pygame 没有 font 模块所以**没在真实窗口跑过**——所有验证都是用临时 venv 装 pygame-ce + SDL_VIDEODRIVER=dummy 做的
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.4 需要重点确认 assets 打包后的 exe 显示像素素材
 - **当前阻塞**：无
 
 ## 未完成 / 待确认
 
-### 用户提出的视觉痛点（**待方向决策**）
-用户反馈"界面太丑太简陋"。已分析根因（纯几何绘制无真实素材）并给出 3 条改进路径，**等用户选定方向**：
-- A. 真正的像素艺术风（接近真星露谷）—— 需要 sprite 素材
-- B. 加真实纹理（PNG 贴在几何形状上）—— 需要 5-10 张木纹/纸纹 PNG，**作者推荐**
-- C. 几何风极致 polish —— 不加素材，天花板低
+### 用户提出的视觉痛点（**已进入 v1.4 处理**）
+用户反馈"界面太丑太简陋"。已选定 B2：引入少量本地 PNG 像素素材 + 紧致布局，而不是继续纯几何 polish。v1.4 已先用项目内生成的本地像素 PNG 打通素材皮肤层；后续如果还不够真，可替换为更高质量的 CC0/自制 sprite pack。
 
 ### 已搁置的功能
 - **音效系统**：`assets/sounds/` 目录已存在但是空的；用户当时表示"一会再讨论"，至今未启用
@@ -80,26 +84,16 @@
 
 **主线**：等用户对"界面美化方向"决策。
 
-**如果选 B（推荐方向）**：
-1. 列出"购物清单"——需要哪些纹理 PNG（木纹、羊皮纸、陶器、星空 / 田野背景等）
-2. 让用户从 itch.io / opengameart.org / Kenney.nl 找 CC0 素材或 AI 生成
-3. 改造 `game/decorations.py` 用纹理 blit 替代纯几何
-4. 同步把 `assets` 目录纳入 PyInstaller 打包（`build.bat` 改 `--add-data`）
-5. 顺便把音效系统也接进来（同一次打包改动）
-
-**如果选 A**：
-1. 重画整套 sprite（杯子、按钮、卡片、装饰物）
-2. 改 `game/animations.py` 的 `Cup.draw` 用 sprite 替代多边形
-3. 工作量大，可能要 2-3 个迭代
-
-**如果选 C**：
-1. 微调当前几何参数（圆角更柔和、阴影更深、配色更饱和）
-2. 加更细的纹理叠加（程序生成柏林噪声当作木纹）
-3. 不引入素材，但天花板有限
+**v1.4 后的候选方向**：
+1. Windows 端实测 `build.bat` 后 exe 是否正确显示 `assets/pixel/` 素材
+2. 如果当前生成素材仍显得粗糙，替换为更高质量的 CC0/自制 sprite pack（优先替换 `assets/pixel/*.png`，代码不用大改）
+3. 如果视觉已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
+4. 题库 JSON 自动扫描仍可作为下一个功能方向
 
 ## 版本回滚速查
 
 ```bash
+git reset --hard v1.4-pixel-ui # 像素素材皮肤 + 紧致星露谷风 UI
 git reset --hard v1.3          # 题库保留 + 中途调难度
 git reset --hard v1.2          # Exit 按钮 + 目标球展示
 git reset --hard v1.1          # 修复 X 退出 bug
