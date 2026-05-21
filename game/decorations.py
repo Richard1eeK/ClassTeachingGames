@@ -38,7 +38,7 @@ def get_wood_background(w, h, seed=42):
 
     vignette = pygame.Surface((w, h), pygame.SRCALPHA)
     for i in range(0, 44, 4):
-        pygame.draw.rect(vignette, (34, 20, 12, 18), (i, i, w - i * 2, h - i * 2), 4)
+        pygame.draw.rect(vignette, (*T.SHADOW_DARK, 10), (i, i, w - i * 2, h - i * 2), 4)
     surf.blit(vignette, (0, 0))
 
     _bg_cache[key] = surf
@@ -50,7 +50,7 @@ def draw_parchment_card(surface, rect, fill=T.PARCHMENT, border_outer=T.WOOD_DAR
                        rivets=True):
     """Draw a pixel parchment panel with a 9-slice wood frame."""
     if shadow:
-        pygame.draw.rect(surface, (43, 25, 15), rect.move(6, 7))
+        pygame.draw.rect(surface, T.SHADOW_COLOR, rect.move(6, 7))
 
     if draw_nineslice(surface, rect, "panel_9slice.png", border=12):
         paper_tile = load_image("assets", "pixel", "parchment_tile.png")
@@ -95,7 +95,7 @@ def draw_wood_plank(surface, rect, color=T.WOOD_BROWN, dark=T.WOOD_DARK,
                     light=T.WOOD_HIGHLIGHT, radius=T.RADIUS_MD, shadow=True):
     """Pixel wood plank panel — used for HUD bars and signs."""
     if shadow:
-        pygame.draw.rect(surface, (43, 25, 15), rect.move(4, 5))
+        pygame.draw.rect(surface, T.SHADOW_COLOR, rect.move(4, 5))
 
     if draw_nineslice(surface, rect, "wood_sign_9slice.png", border=8):
         return

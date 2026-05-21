@@ -101,7 +101,7 @@ class Button:
         rect.y += offset
 
         if not self.pressed and self.enabled:
-            pygame.draw.rect(surface, (43, 25, 15), rect.move(4, 5))
+            pygame.draw.rect(surface, T.SHADOW_COLOR, rect.move(4, 5))
 
         asset = self._asset_name()
         if not self.enabled:

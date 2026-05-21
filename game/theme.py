@@ -1,40 +1,45 @@
 """Stardew Valley inspired theme tokens — colors, spacing, typography, shadows."""
 
-# === Pixel wood / parchment palette ===
-CREAM_BG = (214, 150, 82)
-CREAM_BG_DARK = (156, 97, 47)
-PARCHMENT = (243, 207, 139)
-PARCHMENT_DARK = (210, 157, 83)
-PARCHMENT_SHADOW = (154, 98, 50)
+# === Champagne Farm light-luxury pixel palette ===
+CREAM_BG = (246, 234, 214)
+CREAM_BG_DARK = (224, 200, 164)
+PARCHMENT = (255, 242, 216)
+PARCHMENT_DARK = (239, 216, 176)
+PARCHMENT_SHADOW = (198, 163, 111)
 
-WOOD_DARK = (70, 38, 20)
-WOOD_BROWN = (126, 74, 34)
-WOOD_LIGHT = (181, 111, 52)
-WOOD_HIGHLIGHT = (218, 151, 75)
+WOOD_DARK = (82, 61, 45)
+WOOD_BROWN = (184, 144, 96)
+WOOD_LIGHT = (226, 184, 113)
+WOOD_HIGHLIGHT = (253, 218, 153)
 
-GOLD = (224, 166, 62)
-GOLD_DARK = (151, 95, 36)
-GOLD_LIGHT = (250, 204, 98)
+GOLD = (216, 167, 80)
+GOLD_DARK = (148, 100, 49)
+GOLD_LIGHT = (255, 224, 151)
 
 # === Semantic colors ===
-SV_BLUE = (64, 131, 167)
-SV_BLUE_DARK = (39, 83, 115)
-SV_GREEN = (79, 143, 73)
-SV_GREEN_DARK = (43, 83, 43)
-SV_RED = (178, 75, 61)
-SV_RED_DARK = (115, 47, 42)
-SV_PURPLE = (121, 81, 154)
+SV_BLUE = (126, 166, 184)
+SV_BLUE_DARK = (73, 108, 124)
+SV_GREEN = (143, 183, 170)
+SV_GREEN_DARK = (82, 121, 107)
+SV_RED = (197, 112, 94)
+SV_RED_DARK = (129, 66, 57)
+SV_PURPLE = (157, 132, 178)
 
 # === Cup ===
-CUP_ORANGE = (219, 115, 54)
-CUP_ORANGE_DARK = (158, 70, 36)
-CUP_ORANGE_HIGHLIGHT = (242, 157, 82)
+CUP_ORANGE = (210, 142, 92)
+CUP_ORANGE_DARK = (143, 81, 55)
+CUP_ORANGE_HIGHLIGHT = (239, 181, 121)
 
 # === Text ===
-TEXT_DARK = (58, 35, 22)
-TEXT_BROWN = (89, 58, 34)
-TEXT_LIGHT = (255, 232, 183)
-TEXT_MUTED = (128, 88, 53)
+TEXT_DARK = (69, 48, 32)
+TEXT_BROWN = (101, 73, 47)
+TEXT_LIGHT = (255, 250, 236)
+TEXT_MUTED = (141, 110, 76)
+
+# === Soft pixel shadows ===
+SHADOW_COLOR = (142, 108, 72)
+SHADOW_DARK = (82, 61, 45)
+INTRO_OVERLAY = (82, 61, 45, 54)
 
 # === Legacy aliases (so existing code keeps working during migration) ===
 BG_COLOR = CREAM_BG

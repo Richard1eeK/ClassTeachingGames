@@ -266,7 +266,7 @@ class ShellGame:
         # Intro overlay: dim background + draw the big ball above cups
         if self.state == "intro" and self.intro_ball is not None:
             overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-            overlay.fill((30, 18, 10, 120))
+            overlay.fill(T.INTRO_OVERLAY)
             layer.blit(overlay, (0, 0))
             # "Memorize this!" caption while ball is held large at center
             if self.intro_ball.scale > 1.4:

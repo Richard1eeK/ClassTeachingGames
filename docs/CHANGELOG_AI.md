@@ -7,6 +7,27 @@
 
 ## 2026-05-21
 
+### v1.6 — Champagne Farm 轻奢香槟配色
+
+**目标**：用户反馈 v1.4 颜色太深、显旧，希望先只改配色，做成更轻奢、明亮、干净的视觉气质。
+
+**新建文件**：
+- `docs/superpowers/specs/2026-05-21-v16-champagne-farm-palette-design.md` — v1.6 配色设计说明
+
+**改造文件**：
+- `game/theme.py` — 主题 token 改为浅香槟木色、奶油羊皮纸、香槟金、鼠尾草绿、雾蓝；新增柔和阴影和 intro overlay 色值
+- `assets/pixel/*.png` — 同名同尺寸重生成像素素材，降低木色饱和和明度压暗感
+- `game/decorations.py` / `game/ui_components.py` / `game/animations.py` / `game/shell_game.py` — 替换残留硬编码深棕阴影和 intro 深色遮罩
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.6 状态、决策和验证
+
+**验证**：
+- `python3 -m compileall main.py game` 通过
+- `SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <smoke>` 通过：Settings / ShellGame / Scoreboard 三屏渲染正常
+- 已导出三屏预览图人工检查，整体比 v1.4 更浅、更接近轻奢香槟配色
+- Windows 端仍需用户 `git pull` + `build.bat` 实测 exe 视觉
+
+---
+
 ### v1.4-pixel-ui — 像素素材皮肤 + 紧致星露谷风 UI
 
 **目标**：用户反馈当前 UI 只是"简陋模仿"，要求更紧致，并且真正靠近星露谷 / cozy farming pixel game 的视觉语言。

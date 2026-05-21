@@ -157,6 +157,26 @@
 
 ---
 
+### D-012: v1.6 只做 Champagne Farm 轻奢配色，不改布局
+
+**背景**：v1.4 的 B2 像素素材皮肤完成后，用户反馈颜色太深，看起来像旧木头，希望改成更轻奢的感觉。
+
+**候选**：
+- A. **Champagne Farm：浅香槟木色 + 奶油羊皮纸 + 香槟金 + 鼠尾草绿** ← 选定
+- B. Sage Boutique：鼠尾草绿主导，更安静高级，但课堂游戏感偏弱
+- C. Porcelain Gold：瓷白 + 雾蓝 + 金边，精品应用感强，但离农场像素风较远
+
+**选定 A 的理由**：
+- 能直接解决“暗、旧、脏”的观感，同时保留 cozy farming / classroom game 气质
+- 只需要替换 theme token 和现有 PNG 色值，不需要重改布局或交互
+- 未来如果继续调色，仍可沿用 `game/theme.py` + `assets/pixel/*.png` 的低风险路径
+
+**约束**：
+- v1.6 只改配色，不改布局、功能、交互和游戏流程
+- PNG 素材保持同名同尺寸，避免影响现有 draw code 和 PyInstaller 打包
+
+---
+
 ### D-009: 跨平台开发流程（Mac 开发 + Windows 打包）
 
 **背景**：用户开发机是 macOS，但目标用户用 Windows。

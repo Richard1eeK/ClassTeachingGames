@@ -49,7 +49,7 @@ class Cup:
         shadow_h = max(6, 14 - self.lift_offset // 18)
         shadow_alpha = max(40, 110 - self.lift_offset // 2)
         sh_surf = pygame.Surface((shadow_w * 2, shadow_h * 2), pygame.SRCALPHA)
-        pygame.draw.ellipse(sh_surf, (40, 25, 15, shadow_alpha),
+        pygame.draw.ellipse(sh_surf, (*T.SHADOW_DARK, shadow_alpha),
                             (0, 0, shadow_w * 2, shadow_h * 2))
         surface.blit(sh_surf, (cx - shadow_w, ground_y - shadow_h))
 
@@ -95,7 +95,7 @@ class Cup:
         ball_radius = min(self.width // 3, 35)
         # ball shadow
         shadow_surf = pygame.Surface((ball_radius * 3, ball_radius), pygame.SRCALPHA)
-        pygame.draw.ellipse(shadow_surf, (40, 25, 15, 90),
+        pygame.draw.ellipse(shadow_surf, (*T.SHADOW_DARK, 72),
                             (0, 0, ball_radius * 3, ball_radius))
         surface.blit(shadow_surf, (cx - ball_radius * 3 // 2, ball_y + ball_radius // 2))
 
@@ -151,7 +151,7 @@ class IntroBall:
 
         # shadow
         shadow = pygame.Surface((radius * 3, radius), pygame.SRCALPHA)
-        pygame.draw.ellipse(shadow, (40, 25, 15, 90),
+        pygame.draw.ellipse(shadow, (*T.SHADOW_DARK, 72),
                             (0, 0, radius * 3, radius))
         ball_surf.blit(shadow, (cx - radius * 3 // 2, cy + radius // 2))
 

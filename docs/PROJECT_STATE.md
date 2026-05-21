@@ -1,10 +1,10 @@
 # 项目状态 - PROJECT_STATE
 
-> 最后更新：2026-05-20
+> 最后更新：2026-05-21
 
 ## 当前版本
 
-**最新 tag**：`v1.4-pixel-ui` — 像素素材皮肤 + 紧致星露谷风 UI
+**最新 tag**：`v1.6` — Champagne Farm 轻奢香槟配色
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -57,17 +57,23 @@
 - 三屏布局更紧致：设置页双面板压缩、游戏 HUD 和提示框变薄、结算页卡片和按钮收紧
 - 核心绘制从现代圆角/柔光转为硬边像素边框、块状阴影和有限色阶
 
+### 轻奢配色刷新（v1.6）
+- 只改配色，不改布局、功能、交互和游戏流程
+- 采用 **Champagne Farm** 方向：浅香槟木色、奶油羊皮纸、香槟金、鼠尾草绿、雾蓝
+- 重生成 `assets/pixel/*.png` 同名同尺寸素材，去掉 v1.4 深木色带来的旧感
+- 同步更新 `game/theme.py` 主题 token、硬编码阴影和 intro 遮罩，让游戏画面也保持明亮
+
 ## 当前项目状态
 
-- **代码工作目录状态**：v1.4-pixel-ui 改动完成后需 commit/tag/push
-- **macOS 验证**：headless smoke test 全过；视觉验证因 Python 3.14 的 pygame 没有 font 模块所以**没在真实窗口跑过**——所有验证都是用临时 venv 装 pygame-ce + SDL_VIDEODRIVER=dummy 做的
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.4 需要重点确认 assets 打包后的 exe 显示像素素材
+- **代码工作目录状态**：v1.6 配色改动完成后需 commit/tag/push
+- **macOS 验证**：`python3 -m compileall main.py game` 通过；`SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <smoke>` 三屏渲染通过；真实窗口仍受本机 pygame/font 限制未跑
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.6 需要重点确认 Champagne Farm 配色在 exe 中是否够轻奢、够明亮
 - **当前阻塞**：无
 
 ## 未完成 / 待确认
 
-### 用户提出的视觉痛点（**已进入 v1.4 处理**）
-用户反馈"界面太丑太简陋"。已选定 B2：引入少量本地 PNG 像素素材 + 紧致布局，而不是继续纯几何 polish。v1.4 已先用项目内生成的本地像素 PNG 打通素材皮肤层；后续如果还不够真，可替换为更高质量的 CC0/自制 sprite pack。
+### 用户提出的视觉痛点（**v1.4/v1.6 已阶段处理**）
+用户先反馈"界面太丑太简陋"，v1.4 选定 B2：引入少量本地 PNG 像素素材 + 紧致布局。之后用户反馈颜色太深、显旧，v1.6 只改配色为 Champagne Farm 轻奢香槟方向。后续如果仍不够真，可替换为更高质量的 CC0/自制 sprite pack。
 
 ### 已搁置的功能
 - **音效系统**：`assets/sounds/` 目录已存在但是空的；用户当时表示"一会再讨论"，至今未启用
@@ -82,17 +88,18 @@
 
 ## 下次继续从这里开始
 
-**主线**：等用户对"界面美化方向"决策。
+**主线**：等 Windows 端实测 v1.6 配色。
 
-**v1.4 后的候选方向**：
-1. Windows 端实测 `build.bat` 后 exe 是否正确显示 `assets/pixel/` 素材
-2. 如果当前生成素材仍显得粗糙，替换为更高质量的 CC0/自制 sprite pack（优先替换 `assets/pixel/*.png`，代码不用大改）
+**v1.6 后的候选方向**：
+1. Windows 端实测 `build.bat` 后 exe 是否正确显示轻奢香槟配色
+2. 如果配色仍偏旧，继续只调 `game/theme.py` + `assets/pixel/*.png` 色值，不先动布局
 3. 如果视觉已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
 4. 题库 JSON 自动扫描仍可作为下一个功能方向
 
 ## 版本回滚速查
 
 ```bash
+git reset --hard v1.6          # Champagne Farm 轻奢香槟配色
 git reset --hard v1.4-pixel-ui # 像素素材皮肤 + 紧致星露谷风 UI
 git reset --hard v1.3          # 题库保留 + 中途调难度
 git reset --hard v1.2          # Exit 按钮 + 目标球展示
