@@ -4,6 +4,21 @@ from game import theme as T
 from game.assets import load_image
 from game.ui_components import get_font
 
+TARGET_CARD_FILL = (255, 255, 255)
+TARGET_CARD_TEXT = (20, 20, 20)
+
+
+def fit_text_surface(text, max_width, max_height, start_size, min_size=10):
+    font_size = start_size
+    while font_size >= min_size:
+        font = get_font(font_size, bold=True)
+        surface = font.render(str(text), True, TARGET_CARD_TEXT)
+        if surface.get_width() <= max_width and surface.get_height() <= max_height:
+            return surface
+        font_size -= 1
+    font = get_font(min_size, bold=True)
+    return font.render(str(text), True, TARGET_CARD_TEXT)
+
 
 def ease_in_out(t):
     return t * t * (3 - 2 * t)
@@ -99,22 +114,24 @@ class Cup:
                             (0, 0, ball_radius * 3, ball_radius))
         surface.blit(shadow_surf, (cx - ball_radius * 3 // 2, ball_y + ball_radius // 2))
 
-        pygame.draw.rect(surface, T.WOOD_DARK, (cx - ball_radius, ball_y - ball_radius, ball_radius * 2, ball_radius * 2))
-        inner = pygame.Rect(cx - ball_radius + 4, ball_y - ball_radius + 4, ball_radius * 2 - 8, ball_radius * 2 - 8)
-        pygame.draw.rect(surface, T.PARCHMENT, inner)
-        pygame.draw.rect(surface, T.GOLD, inner, 2)
+        card_w = max(ball_radius * 2, min(150, int(self.width * 1.45)))
+        card_h = ball_radius * 2
+        card = pygame.Rect(cx - card_w // 2, ball_y - card_h // 2, card_w, card_h)
+        pygame.draw.rect(surface, T.WOOD_DARK, card)
+        inner = card.inflate(-6, -6)
+        pygame.draw.rect(surface, TARGET_CARD_FILL, inner)
+        pygame.draw.rect(surface, T.GOLD_DARK, inner, 2)
 
         if self.ball_content:
             if self.ball_type == "text":
-                font_size = max(16, min(30, ball_radius))
-                font = get_font(font_size, bold=True)
-                text_surf = font.render(str(self.ball_content), True, T.TEXT_DARK)
-                text_rect = text_surf.get_rect(center=(cx, ball_y))
-                if text_rect.width > ball_radius * 1.8:
-                    font_size = max(12, font_size - 6)
-                    font = get_font(font_size, bold=True)
-                    text_surf = font.render(str(self.ball_content), True, T.TEXT_DARK)
-                    text_rect = text_surf.get_rect(center=(cx, ball_y))
+                text_surf = fit_text_surface(
+                    self.ball_content,
+                    inner.width - 6,
+                    inner.height - 4,
+                    start_size=max(16, min(30, ball_radius)),
+                    min_size=8,
+                )
+                text_rect = text_surf.get_rect(center=inner.center)
                 surface.blit(text_surf, text_rect)
             elif self.ball_type == "image" and isinstance(self.ball_content, pygame.Surface):
                 img = self.ball_content
@@ -155,23 +172,24 @@ class IntroBall:
                             (0, 0, radius * 3, radius))
         ball_surf.blit(shadow, (cx - radius * 3 // 2, cy + radius // 2))
 
-        outer = pygame.Rect(cx - radius, cy - radius, radius * 2, radius * 2)
+        card_w = min(radius * 4 - 12, max(radius * 2, int(radius * 3.2)))
+        card_h = radius * 2
+        outer = pygame.Rect(cx - card_w // 2, cy - card_h // 2, card_w, card_h)
         pygame.draw.rect(ball_surf, T.WOOD_DARK, outer)
-        inner = outer.inflate(-max(6, radius // 6), -max(6, radius // 6))
-        pygame.draw.rect(ball_surf, T.PARCHMENT, inner)
-        pygame.draw.rect(ball_surf, T.GOLD, inner, max(2, radius // 18))
+        inner = outer.inflate(-max(8, radius // 7), -max(8, radius // 7))
+        pygame.draw.rect(ball_surf, TARGET_CARD_FILL, inner)
+        pygame.draw.rect(ball_surf, T.GOLD_DARK, inner, max(2, radius // 18))
 
         if self.content is not None:
             if self.content_type == "text":
-                font_size = max(20, int(radius * 1.0))
-                font = get_font(font_size, bold=True)
-                text_surf = font.render(str(self.content), True, T.TEXT_DARK)
-                # auto-shrink if too wide
-                while text_surf.get_width() > radius * 1.7 and font_size > 14:
-                    font_size = int(font_size * 0.85)
-                    font = get_font(font_size, bold=True)
-                    text_surf = font.render(str(self.content), True, T.TEXT_DARK)
-                trect = text_surf.get_rect(center=(cx, cy))
+                text_surf = fit_text_surface(
+                    self.content,
+                    inner.width - 8,
+                    inner.height - 6,
+                    start_size=max(20, int(radius * 0.86)),
+                    min_size=14,
+                )
+                trect = text_surf.get_rect(center=inner.center)
                 ball_surf.blit(text_surf, trect)
             elif self.content_type == "image" and isinstance(self.content, pygame.Surface):
                 img = self.content
