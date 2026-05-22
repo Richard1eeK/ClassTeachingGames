@@ -7,7 +7,7 @@
 
 ## 2026-05-22
 
-### v1.10 — Shell Cup Game 游戏图标
+### v2.0 — Shell Cup Game 游戏图标
 
 **目标**：按用户要求采用可爱方向，为 Shell Cup Game 生成并接入正式游戏图标。
 
@@ -18,7 +18,7 @@
 **改造文件**：
 - `main.py` — 启动时通过 `resource_path` 加载 PNG 并设置窗口图标
 - `build.bat` — PyInstaller 增加 `--icon "assets\images\shell_cup_game.ico"`
-- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.10 状态、决策和验证
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v2.0 状态、决策和验证
 
 **验证**：
 - PNG / ICO 文件格式检查通过

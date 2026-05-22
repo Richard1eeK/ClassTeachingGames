@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v1.10` — Shell Cup Game 图标
+**最新 tag**：`v2.0` — Shell Cup Game 图标
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -85,7 +85,7 @@
 - 选满后统一判定：全部选中正确杯子才 +1，否则 reveal 全部正确答案
 - 多目标 intro 用并排白底目标卡展示，展示后淡出再洗牌，避免答案泄露
 
-### 游戏图标（v1.10）
+### 游戏图标（v2.0）
 - 新增可爱暖色 Shell Cup Game 图标：三只木杯 + 金色星星球 + 羊皮纸徽章
 - `assets/images/shell_cup_game_icon.png` 用于 Pygame 窗口图标
 - `assets/images/shell_cup_game.ico` 用于 Windows exe 图标
@@ -93,9 +93,9 @@
 
 ## 当前项目状态
 
-- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v1.10`；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
+- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v2.0`；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
 - **macOS 验证**：`python3 -m compileall main.py game` 通过；图标 PNG/ICO 文件格式检查通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.10 需要重点确认 exe 文件图标、窗口图标和打包流程
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.0 需要重点确认 exe 文件图标、窗口图标和打包流程
 - **当前阻塞**：无代码阻塞；`AGENTS.md` 是否提交待确认
 
 ## 未完成 / 待确认
@@ -117,7 +117,7 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v1.10 图标打包效果和 v1.9 多答案 Normal 模式。
+**主线**：等 Windows 端实测 v2.0 图标打包效果和 v1.9 多答案 Normal 模式。
 
 **v1.9 后的候选方向**：
 1. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
@@ -128,7 +128,7 @@
 ## 版本回滚速查
 
 ```bash
-git reset --hard v1.10         # Shell Cup Game 图标
+git reset --hard v2.0         # Shell Cup Game 图标
 git reset --hard v1.9          # 多答案 Normal 模式
 git reset --hard v1.8          # 图片文件夹导入
 git reset --hard v1.7.1        # 修复长单词目标牌显示溢出
