@@ -8,11 +8,22 @@ from game.ui_components import SCREEN_W, SCREEN_H, BG_COLOR
 from game.settings import SettingsScreen
 from game.shell_game import ShellGame
 from game.scoreboard import Scoreboard
+from game.assets import resource_path
+
+
+def set_window_icon():
+    icon_path = resource_path("assets", "images", "shell_cup_game_icon.png")
+    try:
+        icon = pygame.image.load(icon_path)
+        pygame.display.set_icon(icon)
+    except Exception:
+        pass
 
 
 def main():
     pygame.init()
     pygame.display.set_caption("Shell Cup Game")
+    set_window_icon()
     screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 
     last_settings = None

@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v1.9` — 多答案 Normal 模式
+**最新 tag**：`v1.10` — Shell Cup Game 图标
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -85,11 +85,17 @@
 - 选满后统一判定：全部选中正确杯子才 +1，否则 reveal 全部正确答案
 - 多目标 intro 用并排白底目标卡展示，展示后淡出再洗牌，避免答案泄露
 
+### 游戏图标（v1.10）
+- 新增可爱暖色 Shell Cup Game 图标：三只木杯 + 金色星星球 + 羊皮纸徽章
+- `assets/images/shell_cup_game_icon.png` 用于 Pygame 窗口图标
+- `assets/images/shell_cup_game.ico` 用于 Windows exe 图标
+- `build.bat` 增加 `--icon "assets\images\shell_cup_game.ico"`，Windows 端打包后 exe 会带图标
+
 ## 当前项目状态
 
-- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v1.9`；当前仅看到未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
-- **macOS 验证**：导入兼容、设置页 1/2/3 答案、全对/选错点击路径、`python3 -m compileall main.py game`、headless smoke 均通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.9.1 需要重点确认 Answers/Cups 两条滑杆联动、多答案选择、提示文案和动画流程
+- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v1.10`；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
+- **macOS 验证**：`python3 -m compileall main.py game` 通过；图标 PNG/ICO 文件格式检查通过；真实窗口仍受本机 pygame/font 限制未跑
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.10 需要重点确认 exe 文件图标、窗口图标和打包流程
 - **当前阻塞**：无代码阻塞；`AGENTS.md` 是否提交待确认
 
 ## 未完成 / 待确认
@@ -99,7 +105,7 @@
 
 ### 已搁置的功能
 - **音效系统**：`assets/sounds/` 目录已存在但是空的；用户当时表示"一会再讨论"，至今未启用
-  - `build.bat` 还**没加** `--add-data "assets;assets"`，加音效前必须先补
+  - `build.bat` 已有 `--add-data "assets;assets"`，后续加音效时只需把声音文件放进 assets 并接加载逻辑
   - 如果走 B/A 视觉路径，资源打包问题需要一起解决（assets 整体打进 exe）
 - **图片题库高级规则**：v1.8 已支持直接导入图片文件夹。后续若需要“题库 TXT 引用图片文件夹”“按文件名生成 hint”“递归扫描子文件夹”或 JSON 兼容，再单独设计。`data/custom/` 目录还在，旧 JSON 约定格式 `[{"type": "text"|"image", "content": str, "hint": str}]` 可作为未来兼容格式。
 - **更多游戏**：项目命名是复数 `ClassTeachingGames`，未来可能加新游戏
@@ -111,7 +117,7 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v1.9 多答案 Normal 模式。
+**主线**：等 Windows 端实测 v1.10 图标打包效果和 v1.9 多答案 Normal 模式。
 
 **v1.9 后的候选方向**：
 1. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
@@ -122,6 +128,7 @@
 ## 版本回滚速查
 
 ```bash
+git reset --hard v1.10         # Shell Cup Game 图标
 git reset --hard v1.9          # 多答案 Normal 模式
 git reset --hard v1.8          # 图片文件夹导入
 git reset --hard v1.7.1        # 修复长单词目标牌显示溢出

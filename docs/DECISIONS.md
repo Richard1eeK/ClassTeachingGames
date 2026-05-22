@@ -254,6 +254,26 @@
 
 ---
 
+### D-017: v1.10 图标采用生成式 PNG + Windows ICO 双资源
+
+**背景**：用户希望为 Shell Cup Game 设计一个可爱一点的游戏图标，并确认使用当前生成版本。
+
+**决策**：
+- `assets/images/shell_cup_game_icon.png` 作为源图和 Pygame 窗口图标
+- `assets/images/shell_cup_game.ico` 作为 PyInstaller Windows exe 图标
+- `main.py` 启动时通过 `resource_path` 加载图标，兼容开发模式和 PyInstaller `_MEIPASS`
+
+**理由**：
+- PNG 保留高质量原图，方便以后继续生成不同尺寸或替换视觉
+- ICO 满足 Windows exe 图标需求，包含多尺寸以适配桌面、任务栏和资源管理器
+- 不引入新 Python 依赖；ICO 由现有 PNG 生成，继续保持项目轻量
+
+**约束**：
+- 生成图标作为本地资源随 `assets` 打包，不依赖外部网络
+- `build.bat` 继续保留 Windows `--add-data "assets;assets"` 分号写法
+
+---
+
 ### D-009: 跨平台开发流程（Mac 开发 + Windows 打包）
 
 **背景**：用户开发机是 macOS，但目标用户用 Windows。
