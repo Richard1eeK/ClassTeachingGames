@@ -22,7 +22,7 @@ class ShellGame:
         self.clock = pygame.time.Clock()
         self.settings = settings
         self.answer_count = settings.get("answer_count", max(1, settings["num_cups"] - 2))
-        self.num_cups = self.answer_count + 2
+        self.num_cups = max(settings["num_cups"], self.answer_count + 2)
         self.num_rounds = settings["num_rounds"]
         self.swap_duration = settings["swap_duration"]
         self.speed_level = settings.get("speed_level", 2)

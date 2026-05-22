@@ -37,36 +37,21 @@ class SettingsScreen:
 
         # Read defaults from initial_settings (preserve previous round's choices)
         init = initial_settings or {}
-        init_answers = init.get("answer_count", max(1, min(3, init.get("num_cups", 3) - 2)))
+        init_answers = max(1, min(5, init.get("answer_count", max(1, init.get("num_cups", 3) - 2))))
+        init_cups = max(init_answers + 2, min(9, init.get("num_cups", init_answers + 2)))
         init_rounds = init.get("num_rounds", 5)
         init_speed = init.get("speed_level", 2)
         init_items = list(init.get("items", []))
 
-        # Left card: Correct Answers / Rounds / Speed
+        # Left card: Answers / Cups / Rounds / Speed
         self.left_card = Card(50, 130, 430, 510, title="Game Settings")
-        self.answer_count = init_answers
-        self.answer_buttons = []
-        answer_btn_w = 112
-        answer_gap = 12
-        answer_start_x = self.left_card.rect.x + 34
-        answer_y = self.left_card.rect.y + 92
-        for value in (1, 2, 3):
-            self.answer_buttons.append((
-                value,
-                Button(
-                    answer_start_x + (value - 1) * (answer_btn_w + answer_gap),
-                    answer_y,
-                    answer_btn_w,
-                    48,
-                    f"{value} Ans",
-                    T.SV_GREEN if value == init_answers else T.GOLD,
-                    T.TEXT_LIGHT,
-                    T.FONT_CAPTION,
-                )
-            ))
-        self.round_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 192,
+        self.answer_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 82,
+                                    self.left_card.rect.width - 68, 1, 5, init_answers, "Answers")
+        self.cup_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 172,
+                                 self.left_card.rect.width - 68, 3, 9, init_cups, "Cups")
+        self.round_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 262,
                                    self.left_card.rect.width - 68, 3, 20, init_rounds, "Rounds")
-        self.speed_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 302,
+        self.speed_slider = Slider(self.left_card.rect.x + 34, self.left_card.rect.y + 352,
                                    self.left_card.rect.width - 68, 1, 5, init_speed, "Speed")
 
         # Right card: content
@@ -121,6 +106,13 @@ class SettingsScreen:
                 self.running = False
                 return
 
+            prev_answers = self.answer_slider.value
+            self.answer_slider.handle_event(event)
+            if self.answer_slider.value != prev_answers:
+                self.cup_slider.value = max(self.cup_slider.value, self.answer_slider.value + 2)
+            self.cup_slider.min_val = self.answer_slider.value + 2
+            self.cup_slider.handle_event(event)
+            self.cup_slider.value = max(self.cup_slider.value, self.answer_slider.value + 2)
             self.round_slider.handle_event(event)
             self.speed_slider.handle_event(event)
 
@@ -140,10 +132,6 @@ class SettingsScreen:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
-                for value, button in self.answer_buttons:
-                    if button.is_clicked(pos, True):
-                        self.answer_count = value
-                        break
                 if self.start_btn.is_clicked(pos, True):
                     self.running = False
                 elif self.import_text_btn.is_clicked(pos, True):
@@ -193,9 +181,8 @@ class SettingsScreen:
     def _update(self, dt):
         mouse_pos = pygame.mouse.get_pos()
         self.start_btn.update(mouse_pos, dt)
-        for value, button in self.answer_buttons:
-            button.color = T.SV_GREEN if value == self.answer_count else T.GOLD
-            button.update(mouse_pos, dt)
+        self.cup_slider.min_val = self.answer_slider.value + 2
+        self.cup_slider.value = max(self.cup_slider.value, self.cup_slider.min_val)
         self.import_text_btn.update(mouse_pos, dt)
         self.add_image_btn.update(mouse_pos, dt)
         self.text_input.update(dt)
@@ -213,7 +200,11 @@ class SettingsScreen:
 
         # === Left card: settings ===
         self.left_card.draw(self.screen)
-        self._draw_answer_selector()
+        self.answer_slider.draw(self.screen)
+        self._draw_slider_label(self.answer_slider, f"Answers: {self.answer_slider.value}")
+        self._draw_answers_helper()
+        self.cup_slider.draw(self.screen)
+        self._draw_slider_label(self.cup_slider, f"Cups: {self.cup_slider.value}")
         self.round_slider.draw(self.screen)
         self._draw_slider_label(self.round_slider, f"Rounds: {self.round_slider.value}")
         self.speed_slider.draw(self.screen)
@@ -234,29 +225,16 @@ class SettingsScreen:
 
         self.start_btn.draw(self.screen)
 
-    def _draw_answer_selector(self):
-        x = self.left_card.rect.x + 34
-        y = self.left_card.rect.y + 58
-        label = render_text_outlined(
-            "Correct Answers", T.FONT_BODY, T.TEXT_DARK,
-            outline_color=T.PARCHMENT, outline_w=1, bold=True,
-        )
-        self.screen.blit(label, (x, y))
-        for value, button in self.answer_buttons:
-            button.draw(self.screen)
-            sub = render_text_outlined(
-                f"{value + 2} Cups", T.FONT_CAPTION, T.TEXT_DARK,
-                outline_color=T.PARCHMENT, outline_w=1, bold=True,
-            )
-            self.screen.blit(sub, (
-                button.rect.centerx - sub.get_width() // 2,
-                button.rect.bottom + 3,
-            ))
+    def _draw_answers_helper(self):
         helper = render_text_outlined(
-            "Cups are automatic: answers + 2", T.FONT_CAPTION, T.TEXT_MUTED,
-            outline_color=T.PARCHMENT, outline_w=1, bold=False,
+            f"Cups need at least {self.answer_slider.value + 2}; you can add more.",
+            T.FONT_CAPTION,
+            T.TEXT_MUTED,
+            outline_color=T.PARCHMENT,
+            outline_w=1,
+            bold=False,
         )
-        self.screen.blit(helper, (x, self.left_card.rect.y + 158))
+        self.screen.blit(helper, (self.answer_slider.x, self.answer_slider.y + 32))
 
     def _draw_slider_label(self, slider, text):
         # cover the light-text label drawn by the slider (parchment background)
@@ -369,8 +347,8 @@ class SettingsScreen:
         speed_level = self.speed_slider.value
 
         return {
-            "answer_count": self.answer_count,
-            "num_cups": self.answer_count + 2,
+            "answer_count": self.answer_slider.value,
+            "num_cups": self.cup_slider.value,
             "num_rounds": self.round_slider.value,
             "swap_duration": speed_map.get(speed_level, 800),
             "speed_level": speed_level,

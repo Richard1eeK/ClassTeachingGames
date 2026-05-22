@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a new difficulty/play mode where each round can hide 1, 2, or 3 correct answers under cups. The number of cups is always the number of correct answers plus 2.
+Add a new difficulty/play mode where each round can hide 1-5 correct answers under cups. The number of cups must be at least the number of correct answers plus 2, and can be set higher by the teacher.
 
 ## Scope
 
@@ -10,9 +10,10 @@ v1.9 implements one rule set only: **Normal multi-answer mode**.
 
 Included:
 
-- Settings screen uses `Correct Answers` as the main control
-- choices are `1 Answer / 3 Cups`, `2 Answers / 4 Cups`, `3 Answers / 5 Cups`
-- cups are not independently adjustable in this version
+- Settings screen has two sliders: `Answers` and `Cups`
+- `Answers` supports 1-5
+- `Cups` automatically moves to at least `Answers + 2`, but can be adjusted higher
+- Settings screen keeps `Rounds` and `Speed` sliders below those two controls
 - each round randomly selects N distinct target items and N distinct target cups
 - player gets exactly N clicks when there are N answers
 - after N selections, the round is scored
@@ -30,19 +31,20 @@ Excluded:
 
 ## Settings UI
 
-Replace the old `Cups` slider with a compact `Correct Answers` selector using three cards/buttons:
+Use four sliders in the left settings card:
 
-- `1 Answer` / `3 Cups`
-- `2 Answers` / `4 Cups`
-- `3 Answers` / `5 Cups`
+1. `Answers` — range 1-5
+2. `Cups` — range starts at `Answers + 2`, up to the configured max
+3. `Rounds`
+4. `Speed`
 
-The selected card is highlighted. A short helper line should explain:
+When the teacher increases `Answers`, `Cups` immediately moves up if needed so it is never below `Answers + 2`. The teacher can still move `Cups` higher afterward.
+
+A short helper line under `Answers` should explain:
 
 ```text
-Cups are automatic: answers + 2
+Cups need at least N; you can add more.
 ```
-
-`Rounds` and `Speed` stay as they are.
 
 ## Game Rules
 

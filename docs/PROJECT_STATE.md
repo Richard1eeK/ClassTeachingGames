@@ -80,18 +80,17 @@
 - 只扫描所选文件夹第一层，不递归子文件夹
 
 ### 多答案 Normal 模式（v1.9）
-- 设置页用 `Correct Answers` 三选一卡片替代 Cups 滑块：`1 Ans / 3 Cups`、`2 Ans / 4 Cups`、`3 Ans / 5 Cups`
-- 杯子数量强制为答案数量 + 2，不再单独调 Cups
+- 设置页改为 `Answers` 和 `Cups` 两条滑杆：Answers 支持 1-5，Cups 至少为 Answers + 2 且可手动调更多
 - 每回合随机选 N 个目标和 N 个目标杯，玩家有 N 次点击机会
 - 选满后统一判定：全部选中正确杯子才 +1，否则 reveal 全部正确答案
 - 多目标 intro 用并排白底目标卡展示，展示后淡出再洗牌，避免答案泄露
 
 ## 当前项目状态
 
-- **代码工作目录状态**：v1.9 多答案 Normal 模式改动完成后需 commit/tag/push
+- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v1.9`；当前仅看到未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
 - **macOS 验证**：导入兼容、设置页 1/2/3 答案、全对/选错点击路径、`python3 -m compileall main.py game`、headless smoke 均通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.9 需要重点确认多答案选择、提示文案和动画流程
-- **当前阻塞**：无
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v1.9.1 需要重点确认 Answers/Cups 两条滑杆联动、多答案选择、提示文案和动画流程
+- **当前阻塞**：无代码阻塞；`AGENTS.md` 是否提交待确认
 
 ## 未完成 / 待确认
 
@@ -108,6 +107,7 @@
 ### 已知行为问题（**非 bug，但可能体验不佳**）
 - 用户曾问 "为什么中途结束没回到主页"——这是误解。Scoreboard 上的 `Quit` 关闭程序，`Same Again`/`Adjust` 才回流程。已通过 v1.3 改名解决（v1.0~v1.2 时按钮叫 `Play Again`，语义有歧义）
 - Scoreboard 在 `result_shown` 时 Exit 会把那一题算进 total，但 `0/0` 边界（首回合 intro 期间 Exit）Scoreboard 显示 `0/0`，依赖 `max(1, total)` 保护——视觉上没问题，但 `0/0` 仍会触发 0 颗星的灰色显示
+- `AGENTS.md` 当前是未跟踪文件，内容和用途尚未确认；今天没有提交它，避免把无关或工具生成文件纳入版本
 
 ## 下次继续从这里开始
 

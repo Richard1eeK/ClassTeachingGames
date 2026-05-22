@@ -24,14 +24,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 面向**小学生课堂教学**的小游戏集合（文件夹名 ClassTeachingGames），目前只有一个游戏：**Shell Cup Game（猜杯子）**——老师配置内容（字母/单词/图片），杯子洗牌后让学生猜目标在哪个杯子下。
 
-视觉风格：**星露谷木质 + 羊皮纸 + 暖色调**，UI 文字保持英文（face-to-face 课堂适用，方便英语教学）。
+视觉风格：**星露谷 / cozy farming pixel UI + Champagne Farm 轻奢香槟配色**，UI 文字保持英文（face-to-face 课堂适用，方便英语教学）。
 
 ## 技术栈
 
 - **Python 3.9+**（开发机 macOS 用 3.9.6，但代码兼容更高版本）
 - **Pygame 2.6.1**（游戏引擎，纯几何绘制 UI，不引入新依赖）
 - **PyInstaller 6.11.1**（打包 Windows exe，`--onefile --windowed`）
-- **tkinter**（仅用于"添加图片"时的文件选择对话框，Python 自带）
+- **tkinter**（用于导入 `.txt` 文字题库、选择图片文件夹等文件/文件夹对话框，Python 自带）
 
 ## 跨平台开发流程（重要）
 
@@ -67,17 +67,20 @@ ClassTeachingGames/
 ├── assets/
 │   ├── fonts/font.ttf     # 内置 Nunito 圆体字（必须含目标语言字形）
 │   ├── images/            # 暂未使用
+│   ├── pixel/             # v1.4+ 本地像素 UI 素材（tile、9-slice、cup sprite）
 │   └── sounds/            # 暂未使用（音效系统待加）
 ├── data/
-│   └── custom/            # 题库 JSON 存放位置（当前未启用题库加载）
+│   └── custom/            # 旧 JSON 题库预留目录（当前未启用 JSON UI）
 └── game/
     ├── __init__.py
+    ├── assets.py          # PyInstaller 兼容资源路径、PNG 加载、tile/9-slice 绘制
     ├── theme.py           # 设计 tokens：颜色/间距/圆角/字号
     ├── decorations.py     # 木板背景、羊皮纸卡片、漂浮装饰物（带 surface 缓存）
     ├── icons.py           # 纯几何绘制图标（star/snail/rabbit/lightning/flame/...）
     ├── effects.py         # 粒子系统、浮字、屏幕震动/闪光
-    ├── animations.py      # Cup 类 + AnimationManager（串行动画队列）
+    ├── animations.py      # Cup / IntroBall / MultiIntroBall + AnimationManager（串行动画队列）
     ├── ui_components.py   # Button / Slider / TextInput / Card / WoodSign / get_font
+    ├── question_bank.py   # TXT 文字题库解析 + 图片文件夹扫描
     ├── settings.py        # SettingsScreen——开始游戏前的配置界面
     ├── shell_game.py      # ShellGame——主游戏界面 + 状态机
     └── scoreboard.py      # Scoreboard——结算界面
@@ -110,14 +113,16 @@ init → intro → showing → guessing → revealing → result_shown → (next
 1. `AnimationManager.done`——动画队列空了就推进（`intro → showing`，`showing → guessing`，`revealing → result_shown`）
 2. 鼠标点击——`guessing` 阶段点杯子触发 `revealing`，`result_shown` 阶段点 Next 按钮触发下一回合，**任意非 finished state 点 Exit 触发 `finished`**
 
-`intro` 阶段会展示放大目标球（IntroBall），让用户看清内容后球弧线飞入目标杯子，然后才进入正常的洗牌阶段（`showing`）。
+`intro` 阶段会展示目标内容：单答案用 `IntroBall` 放大展示并飞入目标杯；多答案（v1.9+）用 `MultiIntroBall` 并排展示多个白底目标卡，展示淡出后再盖杯/洗牌，避免答案泄露。
+
+v1.9+ 的 Normal 多答案规则：`answer_count` 为 1/2/3，`num_cups = answer_count + 2`；玩家有 N 次点击机会，选满后统一判定，全部选中正确杯子才 +1。
 
 **加新交互前必须检查当前 `state`**，否则会出现"动画还没播完用户就能点"的 bug。
 
 ### 3. AnimationManager 是串行 FIFO 队列
 
 `game/animations.py` 的 `AnimationManager` **不是并行动画系统**，是先进先出的队列：每次 `update(dt)` 只推进 `animations[0]`，做完才弹出下一个。
-- 已有动画类型：`add_swap` / `add_scramble` / `add_lift` / `add_lower` / `add_pause` / `add_shake` / `add_glow`
+- 已有动画类型：`add_swap` / `add_scramble` / `add_lift` / `add_lower` / `add_pause` / `add_shake` / `add_glow` / `add_intro_show` / `add_intro_fly`
 - `Cup.x` 直接被动画 mutate（不是事件驱动），杯子的"逻辑位置"和"屏幕位置"是同一个值
 - `Cup.shake_offset` / `Cup.glow` / `Cup.lift_offset` 同理
 - `done` 属性 = 队列空 = 当前阶段动画结束
@@ -143,7 +148,7 @@ init → intro → showing → guessing → revealing → result_shown → (next
 
 颜色、间距（`SPACE_*`）、圆角（`RADIUS_*`）、字号（`FONT_*`）都在 `game/theme.py`。**新代码用 token，不要写死数值**，方便日后调整。
 
-旧代码里的 `CANDY_*` / `BG_COLOR` / `WHITE` 等是 legacy alias，已经映射到星露谷色板上，**新代码优先用 `theme.SV_BLUE` / `theme.GOLD` / `theme.PARCHMENT` 等语义化名称**。
+当前主配色是 v1.6 的 **Champagne Farm**：浅香槟木色、奶油羊皮纸、香槟金、鼠尾草绿、雾蓝。旧代码里的 `CANDY_*` / `BG_COLOR` / `WHITE` 等是 legacy alias，已经映射到当前色板上，**新代码优先用 `theme.SV_BLUE` / `theme.GOLD` / `theme.PARCHMENT` 等语义化名称**。
 
 ### 6. UI 文字必须用 `render_text_outlined`
 
@@ -157,21 +162,21 @@ init → intro → showing → guessing → revealing → result_shown → (next
 
 ### 8. PyInstaller 路径处理
 
-凡是要读 `data/` 或 `assets/` 下的文件，必须用 `getattr(sys, 'frozen', False)` 判断：
-- 开发：`<repo>/data`
-- 打包：`sys._MEIPASS/data`（PyInstaller 临时解压目录）
+凡是要读 `data/` 或 `assets/` 下的项目内资源，必须用 `getattr(sys, 'frozen', False)` 判断：
+- 开发：`<repo>/data` 或 `<repo>/assets`
+- 打包：`sys._MEIPASS/data` 或 `sys._MEIPASS/assets`（PyInstaller 临时解压目录）
 
 加新资源目录时**必须**：
 1. 在 `build.bat` 的 `--add-data` 里加（Windows 写法 `"src;dest"` 用分号）
 2. 在加载代码里复用 `_MEIPASS` 判断
 否则 exe 找不到文件。
 
-`assets/` 目前没在 `build.bat` 里——加音效/图片功能时记得补上。
+`build.bat` 已在 v1.4 加入 `--add-data "assets;assets"`，像素素材和字体会进 exe。用户导入的外部图片文件夹不打包进 exe，只在运行时通过绝对路径读取。
 
 ## 代码风格
 
-- **不引入新依赖**：所有视觉效果用 Pygame 几何绘制完成（参考 `icons.py` / `decorations.py`）
-- **资源本地化**：图标用代码画而非 PNG，避免 PyInstaller 路径问题
+- **不引入新依赖**：所有视觉效果优先用 Pygame 内置能力和现有本地素材完成
+- **资源本地化**：图标仍优先用代码画；UI 皮肤已允许使用 `assets/pixel/` 下少量本地 PNG，新增素材必须同步考虑 PyInstaller 路径
 - **背景/纹理必须缓存**：木板背景、羊皮纸纹理这种重渲染必须用模块级缓存 dict（参考 `decorations.get_wood_background`、`_get_parchment_texture`），别每帧重画
 - **场景间不共享状态**：用 dict 通过 `run()` 返回值传递
 - **动画修改属性而非派发事件**：`AnimationManager` 直接改 `Cup.x` / `lift_offset` / `glow` / `shake_offset`
@@ -182,7 +187,7 @@ init → intro → showing → guessing → revealing → result_shown → (next
 ## 禁止事项
 
 1. **禁止引入新的 Python 依赖**——任何视觉/音效需求先尝试用 Pygame 内置能力实现
-2. **禁止把 PNG/JPG 当成必须资源**——图标走 `icons.py` 几何绘制，避免 exe 打包丢资源
+2. **禁止随意新增外部 PNG/JPG 作为必须资源**——图标优先走 `icons.py` 几何绘制；如新增本地 UI 素材，必须放入 `assets/` 并确认 `build.bat` 打包
 3. **禁止改 `build.bat` 的路径分隔符**——`"data;data"` 是 Windows 写法，改成冒号会让 Windows 打包失败
 4. **禁止在 macOS 上跑 `pyinstaller`**——这个项目的 exe 验证只在 Windows 端做
 5. **禁止使用 `pygame.font.SysFont` 作为唯一字体源**——必须经过 `ui_components.get_font()` 走 fallback 链
@@ -194,10 +199,11 @@ init → intro → showing → guessing → revealing → result_shown → (next
 
 ## 已知尚未实现 / TODO
 
-- **音效系统**：`assets/sounds/` 是空的，`build.bat` 也还没加 `--add-data "assets;assets"`，待加
-- **题库 JSON 加载**：今天已删除"Load Bank"模式，目前只有手动输入。题库格式仍约定为 `[{"type": "text"|"image", "content": str, "hint": str}]`，等用户决定如何重新引入（可能改成自动扫 `data/custom/` 下的 JSON）
+- **音效系统**：`assets/sounds/` 是空的；`build.bat` 已能打包 `assets/`，后续加音效时仍需确认 pygame mixer、资源路径和 Windows exe 行为
+- **题库 JSON 加载**：当前已有 TXT 文字导入和图片文件夹导入；旧 JSON 格式仍约定为 `[{"type": "text"|"image", "content": str, "hint": str}]`，是否重新引入 UI 待确认
+- **图片题库高级规则**：是否按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹，待确认
+- **多答案 Strict 模式**：v1.9 只做 Normal（N 个答案给 N 次点击机会）；是否加“点错立即失败”的 Strict 模式待确认
 - **更多游戏**：项目命名是复数 `ClassTeachingGames`，未来加新游戏建议在 `game/` 下开新模块 + `main.py` 前加游戏选择菜单
-- **视觉美化方向待决**：用户提过"界面太简陋"，等他在像素艺术 / 真实纹理 PNG / 几何风极致 polish 三条路径中选定。详见 `docs/PROJECT_STATE.md`
 
 ## 用户协作偏好
 
@@ -205,10 +211,10 @@ init → intro → showing → guessing → revealing → result_shown → (next
 
 - **决策风格**：用户在不确定时倾向选"推荐方案"，喜欢 AI 给出明确推荐 + 候选对比 + 推荐理由。不要把决策完全推回去。
 - **测试基准**：用户的测试方式是"Windows 端 build.bat → 跑 exe → 看真实窗口"。Mac 端的 headless smoke test 只是 AI 自己的内部验证，**不能替代**用户实测。每次推 push 后用户会去 Windows 端实测。
-- **回滚意识**：用户重视回滚能力——重要 milestone 都打 git tag（`v1.0-stardew` / `v1.1` / `v1.2` / `v1.3`），tag 注释里要写明"回滚命令: git reset --hard vX.Y"。后续重要功能继续打 tag。
+- **回滚意识**：用户重视回滚能力——重要 milestone 都打 git tag（例如 `v1.0-stardew`、`v1.7`、`v1.8`、`v1.9`），tag 注释里要写明"回滚命令: git reset --hard vX.Y"。后续重要功能继续打 tag。
 - **节奏**：单次会话内连续做多个版本（v1.0 → v1.1 → v1.2 → v1.3）是用户接受的，不要为了"显得精细"而拆得过散。但**收尾时需要主动整理 docs**——这是用户已经形成的习惯。
 - **推送默认开**：改完代码默认假设要 `git push`，不要每次问"要推吗"——除非是探索性的实验改动。
-- **Plan-first 适用范围**：大改动用户喜欢"先出 Plan 我看看确认后再操作"。小 bug 修复直接动手即可，不要为简单事 over-plan。
+- **Plan-first 适用范围**：大改动用户喜欢"先出 Plan 我看看确认后再操作"，尤其是玩法规则/UI 入口/题库格式这类会影响课堂流程的决策。小 bug 修复直接动手即可，不要为简单事 over-plan。
 - **输出风格**：用户偏好简洁、直接、有结构的回复。每次回复开头加 emoji，结尾加 `Your Honour`（这是项目级 CLAUDE.md 已有的规则）。
 
 ## 版本管理约定

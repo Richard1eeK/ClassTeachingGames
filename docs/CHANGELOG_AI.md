@@ -7,15 +7,49 @@
 
 ## 2026-05-22
 
+### 文档收尾 — 更新项目长期记忆和当前状态
+
+**目标**：按用户要求总结今天主要改动、技术决策、当前项目状态、未完成问题和开发偏好；只更新文档，不继续开发新功能。
+
+**改造文件**：
+- `CLAUDE.md` — 更新项目定位、目录结构、PyInstaller 资源说明、当前玩法规则、TODO 和用户协作偏好
+- `docs/PROJECT_STATE.md` — 更新当前状态，补充 `AGENTS.md` 未跟踪且待确认
+- `docs/DECISIONS.md` — 新增 D-016，记录未确认用途的新文件不随功能提交
+- `docs/CHANGELOG_AI.md` — 记录本次文档收尾
+
+**未改动**：
+- 未开发新功能
+- 未提交 `AGENTS.md`，其内容和用途待确认
+
+---
+
+### v1.9.1 — 多答案设置页改为 Answers/Cups 双滑杆
+
+**目标**：修正 v1.9 三卡设置入口显示不完整且不符合用户期望的问题。用户明确要求上方滑杆调 Answers（1-5），下方滑杆调 Cups；Answers 变化时 Cups 自动至少为 Answers + 2，但 Cups 可以手动调更多。
+
+**改造文件**：
+- `game/settings.py` — 用 `Answers` / `Cups` 两条滑杆替代三卡 Correct Answers；Answers 变化时 Cups 自动同步到合法最小值
+- `game/shell_game.py` — 使用设置页传入的 `num_cups`，不再强制 `num_cups = answer_count + 2`
+- `docs/superpowers/specs/2026-05-22-v19-multi-answer-normal-mode-design.md` — 更新设计说明
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 更新 v1.9.1 状态和决策
+
+**验证**：
+- Settings preview 已导出，确认四条滑杆完整显示
+- Answers/Cups 联动 smoke 通过：Cups 不低于 Answers + 2，且可保持更高值
+- Gameplay smoke 通过：1/3/5 Answers + 自定义 Cups 路径可正常创建目标和判分
+- `python3 -m compileall main.py game` 通过
+
+---
+
 ### v1.9 — 多答案 Normal 模式
 
-**目标**：新增 1/2/3 个正确答案的玩法；杯子数量强制为答案数量 + 2；先做 Normal 规则，即有 N 个答案就有 N 次点击机会，选满后统一判定。
+**目标**：新增 1/2/3 个正确答案的玩法；杯子数量初版按答案数量 + 2 派生；先做 Normal 规则，即有 N 个答案就有 N 次点击机会，选满后统一判定。
 
 **新建文件**：
 - `docs/superpowers/specs/2026-05-22-v19-multi-answer-normal-mode-design.md` — v1.9 多答案 Normal 模式设计说明
 
 **改造文件**：
-- `game/settings.py` — 将 Cups 滑块替换为 `Correct Answers` 三选一卡片：`1 Ans / 3 Cups`、`2 Ans / 4 Cups`、`3 Ans / 5 Cups`
+- `game/settings.py` — 将 Cups 滑块替换为初版 `Correct Answers` 三选一卡片：`1 Ans / 3 Cups`、`2 Ans / 4 Cups`、`3 Ans / 5 Cups`（后续 v1.9.1 已改为双滑杆）
 - `game/shell_game.py` — 每回合选择 N 个 target items 和 N 个 target cups；支持 N 次点击后统一判分；更新多答案提示文案和选中高亮
 - `game/animations.py` — 新增 `MultiIntroBall`，并排展示多个目标；多目标展示淡出后再盖杯/洗牌，避免答案泄露
 - `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v1.9 状态、决策和验证
