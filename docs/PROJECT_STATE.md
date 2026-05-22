@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v2.0` — Shell Cup Game 图标
+**最新 tag**：`v2.1` — 双语帮助说明
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -91,11 +91,18 @@
 - `assets/images/shell_cup_game.ico` 用于 Windows exe 图标
 - `build.bat` 增加 `--icon "assets\images\shell_cup_game.ico"`，Windows 端打包后 exe 会带图标
 
+### 双语帮助说明（v2.1）
+- 设置页右上角新增 `Need Help? ->` 和圆形 `i` 按钮
+- 点击后打开羊皮纸帮助弹窗，支持 `EN` / `中文` 切换
+- 内容覆盖设置游戏、添加题目、怎么玩三段
+- TXT 导入说明明确要求每行带序号，并提示可截图单词表后用 AI 整理成带序号文本
+- 中文说明优先使用系统中文字体，避免内置英文字体显示方块字
+
 ## 当前项目状态
 
-- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v2.0`；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
-- **macOS 验证**：`python3 -m compileall main.py game` 通过；图标 PNG/ICO 文件格式检查通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.0 需要重点确认 exe 文件图标、窗口图标和打包流程
+- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v2.1`；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
+- **macOS 验证**：`python3 -m compileall main.py game` 通过；headless 渲染 Settings / 英文帮助 / 中文帮助预览通过；真实窗口仍受本机 pygame/font 限制未跑
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.1 需要重点确认帮助按钮、双语切换、中文字体和 exe 图标
 - **当前阻塞**：无代码阻塞；`AGENTS.md` 是否提交待确认
 
 ## 未完成 / 待确认
@@ -117,7 +124,7 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v2.0 图标打包效果和 v1.9 多答案 Normal 模式。
+**主线**：等 Windows 端实测 v2.1 帮助说明、v2.0 图标打包效果和 v1.9 多答案 Normal 模式。
 
 **v1.9 后的候选方向**：
 1. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
@@ -128,7 +135,8 @@
 ## 版本回滚速查
 
 ```bash
-git reset --hard v2.0         # Shell Cup Game 图标
+git reset --hard v2.1          # 双语帮助说明
+git reset --hard v2.0          # Shell Cup Game 图标
 git reset --hard v1.9          # 多答案 Normal 模式
 git reset --hard v1.8          # 图片文件夹导入
 git reset --hard v1.7.1        # 修复长单词目标牌显示溢出

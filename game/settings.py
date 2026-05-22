@@ -14,7 +14,7 @@ from game.decorations import (
 )
 from game.icons import (
     draw_snail, draw_rabbit, draw_lightning, draw_flame, draw_tornado,
-    draw_image_icon, draw_text_icon, draw_trash, draw_plus,
+    draw_image_icon, draw_text_icon, draw_trash, draw_plus, draw_info,
 )
 from game.question_bank import read_text_bank_file, scan_image_folder
 
@@ -82,6 +82,14 @@ class SettingsScreen:
 
         self.start_btn = Button(SCREEN_W // 2 - 120, SCREEN_H - 94, 240, 54,
                                 "Start Game!", T.SV_GREEN, T.TEXT_LIGHT, T.FONT_HEADING)
+        self.help_open = False
+        self.help_lang = "en"
+        self.help_btn_rect = pygame.Rect(SCREEN_W - 96, 56, 46, 46)
+        self.help_modal_rect = pygame.Rect(132, 106, 760, 556)
+        self.help_lang_btn = Button(self.help_modal_rect.right - 150, self.help_modal_rect.y + 24,
+                                    92, 38, "中文", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION)
+        self.help_close_btn = Button(self.help_modal_rect.right - 50, self.help_modal_rect.y + 24,
+                                     32, 38, "X", T.SV_RED, T.TEXT_LIGHT, T.FONT_CAPTION)
 
         self.decorations = make_floating_decorations(8, SCREEN_W, SCREEN_H, seed=11)
 
@@ -105,6 +113,9 @@ class SettingsScreen:
                 self.quit_requested = True
                 self.running = False
                 return
+            if self.help_open:
+                self._handle_help_event(event)
+                continue
 
             prev_answers = self.answer_slider.value
             self.answer_slider.handle_event(event)
@@ -138,6 +149,8 @@ class SettingsScreen:
                     self._import_text_bank()
                 elif self.add_image_btn.is_clicked(pos, True):
                     self._import_image_folder()
+                elif self.help_btn_rect.collidepoint(pos):
+                    self.help_open = True
                 else:
                     # delete buttons in items list
                     for rect, idx in self._delete_btn_rects:
@@ -180,6 +193,11 @@ class SettingsScreen:
 
     def _update(self, dt):
         mouse_pos = pygame.mouse.get_pos()
+        self.help_lang_btn.update(mouse_pos, dt)
+        self.help_close_btn.update(mouse_pos, dt)
+        if self.help_open:
+            update_floating_decorations(self.decorations, dt)
+            return
         self.start_btn.update(mouse_pos, dt)
         self.cup_slider.min_val = self.answer_slider.value + 2
         self.cup_slider.value = max(self.cup_slider.value, self.cup_slider.min_val)
@@ -224,6 +242,149 @@ class SettingsScreen:
         self._draw_items_list()
 
         self.start_btn.draw(self.screen)
+        self._draw_help_entry()
+        if self.help_open:
+            self._draw_help_modal()
+
+    def _handle_help_event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.help_open = False
+            return
+        if event.type != pygame.MOUSEBUTTONDOWN:
+            return
+        pos = event.pos
+        if self.help_close_btn.is_clicked(pos, True):
+            self.help_open = False
+        elif self.help_lang_btn.is_clicked(pos, True):
+            self.help_lang = "zh" if self.help_lang == "en" else "en"
+
+    def _draw_help_entry(self):
+        label = render_text_outlined(
+            "Need Help? ->", T.FONT_CAPTION, T.TEXT_LIGHT,
+            outline_color=T.WOOD_DARK, outline_w=2, bold=True,
+        )
+        self.screen.blit(label, (self.help_btn_rect.x - label.get_width() - 10,
+                                 self.help_btn_rect.centery - label.get_height() // 2))
+        pygame.draw.rect(self.screen, T.SHADOW_COLOR, self.help_btn_rect.move(3, 4))
+        pygame.draw.rect(self.screen, T.WOOD_DARK, self.help_btn_rect)
+        pygame.draw.rect(self.screen, T.GOLD_LIGHT, self.help_btn_rect.inflate(-6, -6))
+        draw_info(self.screen, self.help_btn_rect.centerx, self.help_btn_rect.centery, 13, T.WOOD_DARK)
+
+    def _draw_help_modal(self):
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((82, 61, 45, 116))
+        self.screen.blit(overlay, (0, 0))
+
+        draw_parchment_card(self.screen, self.help_modal_rect)
+        title_text = "Game Guide" if self.help_lang == "en" else "游戏说明"
+        title = render_text_outlined(
+            title_text, T.FONT_HEADING, T.TEXT_LIGHT,
+            outline_color=T.WOOD_DARK, outline_w=2, bold=True,
+        )
+        ribbon = pygame.Rect(self.help_modal_rect.x + 28, self.help_modal_rect.y + 20, 250, 44)
+        draw_wood_plank(self.screen, ribbon, color=T.WOOD_BROWN, radius=T.RADIUS_MD, shadow=True)
+        self.screen.blit(title, (ribbon.centerx - title.get_width() // 2,
+                                 ribbon.centery - title.get_height() // 2))
+
+        self.help_lang_btn.text = "中文" if self.help_lang == "en" else "EN"
+        self.help_lang_btn.draw(self.screen)
+        self.help_close_btn.draw(self.screen)
+
+        self._draw_help_sections(self.help_modal_rect.x + 44, self.help_modal_rect.y + 92,
+                                 self.help_modal_rect.width - 88)
+
+    def _help_content(self):
+        if self.help_lang == "zh":
+            return [
+                ("如何设置", [
+                    "用 Answers 选择每一轮有几个正确答案。",
+                    "用 Cups 选择杯子数量。",
+                    "用 Rounds 选择游戏轮数。",
+                    "用 Speed 选择洗牌速度。",
+                ]),
+                ("添加题目", [
+                    "输入单词后按 Enter 添加。",
+                    "点击 Import 从 .txt 文件导入单词。",
+                    ".txt 文件中每行写一个带序号的单词，例如 1. apple、2. banana、3. cat。",
+                    "（可以截图单词表后，用 AI 帮你整理成带序号的文本。）",
+                    "点击 Folder 从文件夹导入图片。",
+                    "至少添加 1 个题目后才能开始游戏。",
+                ]),
+                ("怎么玩", [
+                    "先认真看目标答案。",
+                    "观察杯子洗牌。",
+                    "点击你认为正确的杯子。",
+                    "如果全部选对，就得 1 分。",
+                ]),
+            ]
+        return [
+            ("How to Set Up", [
+                "Choose how many correct answers you want with Answers.",
+                "Choose how many cups you want with Cups.",
+                "Choose the number of rounds with Rounds.",
+                "Choose the shuffle speed with Speed.",
+            ]),
+            ("Add Your Items", [
+                "Type a word and press Enter to add it.",
+                "Click Import to add words from a .txt file.",
+                "In the .txt file, put one word on each line with a number, like 1. apple, 2. banana, 3. cat.",
+                "(You can screenshot a word list and ask AI to turn it into numbered text.)",
+                "Click Folder to add pictures from a folder.",
+                "You need at least one item to start the game.",
+            ]),
+            ("How to Play", [
+                "Look carefully at the target answer or answers.",
+                "Watch the cups shuffle.",
+                "Click the cup or cups you think are correct.",
+                "If all your choices are correct, you score 1 point.",
+            ]),
+        ]
+
+    def _draw_help_sections(self, x, y, max_w):
+        for section_title, lines in self._help_content():
+            title = render_text_outlined(
+                section_title, T.FONT_BODY, T.TEXT_DARK,
+                outline_color=T.PARCHMENT, outline_w=1, bold=True,
+            )
+            self.screen.blit(title, (x, y))
+            y += 32
+            number = 1
+            for line in lines:
+                is_note = line.startswith("(") or line.startswith("（")
+                bullet = "" if is_note else f"{number}. "
+                if not is_note:
+                    number += 1
+                wrapped = self._wrap_help_text(bullet + line, T.FONT_CAPTION, max_w - 18)
+                color = T.TEXT_MUTED if is_note else T.TEXT_BROWN
+                for wrapped_line in wrapped:
+                    surf = render_text_outlined(
+                        wrapped_line, T.FONT_CAPTION, color,
+                        outline_color=T.PARCHMENT, outline_w=1, bold=False,
+                    )
+                    self.screen.blit(surf, (x + 18, y))
+                    y += 22
+                y += 1
+            y += 14
+
+    def _wrap_help_text(self, text, size, max_w):
+        font = get_font(size, text=text)
+        if font.size(text)[0] <= max_w:
+            return [text]
+        units = text.split(" ") if " " in text else list(text)
+        lines = []
+        current = ""
+        sep = " " if " " in text else ""
+        for unit in units:
+            candidate = unit if not current else current + sep + unit
+            if font.size(candidate)[0] <= max_w:
+                current = candidate
+            else:
+                if current:
+                    lines.append(current)
+                current = unit
+        if current:
+            lines.append(current)
+        return lines
 
     def _draw_answers_helper(self):
         helper = render_text_outlined(

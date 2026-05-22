@@ -7,6 +7,27 @@
 
 ## 2026-05-22
 
+### v2.1 — 双语帮助说明
+
+**目标**：在设置页增加简单易懂的说明书入口，帮助老师理解如何设置游戏、导入题目和游玩；支持中英文切换。
+
+**新建文件**：
+- `docs/superpowers/specs/2026-05-22-v21-bilingual-help-guide-design.md` — v2.1 双语帮助说明设计记录
+
+**改造文件**：
+- `game/settings.py` — 新增 `Need Help? ->` + `i` 入口、帮助弹窗、`EN` / `中文` 切换、`Esc` / `X` 关闭
+- `game/ui_components.py` — `get_font` 检测中文时优先选择系统中文字体，避免说明弹窗显示方块字
+- `game/icons.py` — 新增几何绘制 `draw_info` 图标
+- `docs/PROJECT_STATE.md` / `docs/DECISIONS.md` / `docs/CHANGELOG_AI.md` — 记录 v2.1 状态、决策和验证
+
+**验证**：
+- `python3 -m compileall main.py game` 通过
+- `SDL_VIDEODRIVER=dummy /tmp/pgvenv/bin/python <help preview script>` 通过
+- 已导出 Settings 入口、英文帮助弹窗、中文帮助弹窗预览图并检查无明显重叠
+- Windows 端仍需用户 `git pull` + `build.bat` 实测中文字体、点击交互和 exe 真实窗口
+
+---
+
 ### v2.0 — Shell Cup Game 游戏图标
 
 **目标**：按用户要求采用可爱方向，为 Shell Cup Game 生成并接入正式游戏图标。

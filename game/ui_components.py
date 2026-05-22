@@ -14,7 +14,30 @@ from game.assets import draw_nineslice
 from game.decorations import draw_wood_plank, draw_parchment_card
 
 
-def get_font(size, bold=False):
+def _contains_cjk(text):
+    return any("\u4e00" <= ch <= "\u9fff" for ch in str(text))
+
+
+def get_font(size, bold=False, text=""):
+    cjk_font_paths = [
+        "/System/Library/Fonts/PingFang.ttc",
+        "/System/Library/Fonts/STHeiti Light.ttc",
+        "/System/Library/Fonts/STHeiti Medium.ttc",
+        "C:/Windows/Fonts/msyh.ttc",
+        "C:/Windows/Fonts/simhei.ttf",
+        "C:/Windows/Fonts/simsun.ttc",
+    ]
+    if _contains_cjk(text):
+        for path in cjk_font_paths:
+            if os.path.exists(path):
+                try:
+                    f = pygame.font.Font(path, size)
+                    if bold:
+                        f.set_bold(True)
+                    return f
+                except Exception:
+                    continue
+
     bundled = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "fonts", "font.ttf")
     if os.path.exists(bundled):
         try:
@@ -54,7 +77,7 @@ def get_font(size, bold=False):
 
 def render_text_outlined(text, size, color, outline_color=T.WOOD_DARK, outline_w=2, bold=False):
     """Render text with a thick outline (like Stardew dialog text)."""
-    font = get_font(size, bold=bold)
+    font = get_font(size, bold=bold, text=text)
     base = font.render(text, True, color)
     w, h = base.get_size()
     pad = outline_w + 1

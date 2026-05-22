@@ -231,6 +231,16 @@ def draw_plus(surface, x, y, size, color=(135, 180, 90)):
     pygame.draw.line(surface, color, (x - size, y), (x + size, y), lw)
 
 
+def draw_info(surface, x, y, size, color=(75, 55, 40)):
+    """Information icon."""
+    outline = (75, 55, 40)
+    pygame.draw.circle(surface, (255, 248, 230), (x, y), size)
+    pygame.draw.circle(surface, outline, (x, y), size, 2)
+    pygame.draw.circle(surface, color, (x, y - size // 2), max(2, size // 7))
+    pygame.draw.line(surface, color, (x, y - size // 5), (x, y + size // 2), max(3, size // 5))
+    pygame.draw.line(surface, color, (x - size // 4, y + size // 2), (x + size // 4, y + size // 2), max(2, size // 7))
+
+
 def draw_gear(surface, x, y, size, color=(75, 55, 40)):
     """Gear / settings icon — for Adjust button."""
     teeth = 8
