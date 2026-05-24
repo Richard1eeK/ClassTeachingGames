@@ -1,10 +1,10 @@
 # 项目状态 - PROJECT_STATE
 
-> 最后更新：2026-05-22
+> 最后更新：2026-05-24
 
 ## 当前版本
 
-**最新 tag**：`v2.1` — 双语帮助说明
+**最新 tag**：`v2.1` — 双语帮助说明（当前工作版本 v2.2-resize，待 Windows 实测后打 tag）
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -98,12 +98,18 @@
 - TXT 导入说明明确要求每行带序号，并提示可截图单词表后用 AI 整理成带序号文本
 - 中文说明优先使用系统中文字体，避免内置英文字体显示方块字
 
+### 自由拖拽窗口缩放（v2.2-resize）
+- Pygame display 改为 `RESIZABLE`，用户可像普通软件一样拖动窗口边框调整大小
+- 新增逻辑画布包装层：内部仍按 1024×768 绘制，实际窗口等比缩放并居中显示
+- 鼠标位置和点击事件统一从真实窗口坐标反算回逻辑坐标，避免按钮、滑块和杯子点击偏移
+- 非 4:3 窗口会出现左右或上下留边，以避免界面拉伸变形和布局错乱
+
 ## 当前项目状态
 
-- **代码工作目录状态**：`main` 已推送到 `origin/main`，最新 tag 为 `v2.1`；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
-- **macOS 验证**：`python3 -m compileall main.py game` 通过；headless 渲染 Settings / 英文帮助 / 中文帮助预览通过；真实窗口仍受本机 pygame/font 限制未跑
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.1 需要重点确认帮助按钮、双语切换、中文字体和 exe 图标
-- **当前阻塞**：无代码阻塞；`AGENTS.md` 是否提交待确认
+- **代码工作目录状态**：`main` 准备推送 v2.2-resize；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
+- **macOS 验证**：`python3 -m py_compile main.py game/*.py` 通过；`ScaledWindow` headless 坐标映射 smoke 通过；本机 Homebrew Python 的 `pygame.font` 缺失，真实窗口/字体渲染仍需 Windows 端确认
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.2-resize 需要重点确认拖动窗口边框缩放、留边显示、按钮/滑块/杯子点击无偏移
+- **当前阻塞**：图片性能问题尚未处理，按用户要求先完成窗口自由缩放；`AGENTS.md` 是否提交待确认
 
 ## 未完成 / 待确认
 
@@ -124,18 +130,19 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v2.1 帮助说明、v2.0 图标打包效果和 v1.9 多答案 Normal 模式。
+**主线**：等 Windows 端实测 v2.2-resize，确认可自由拖动窗口边框缩放且点击无偏移。
 
-**v1.9 后的候选方向**：
-1. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
-2. 如果需要更高难度，再加 Strict 模式（点错立即失败）
-3. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
-4. 如果视觉和题库流程已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
+**v2.2 后续候选方向**：
+1. 处理图片性能问题：20 张左右 PNG/JPG 导入不应卡死，游戏内按展示尺寸压缩缓存
+2. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
+3. 如果需要更高难度，再加 Strict 模式（点错立即失败）
+4. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
+5. 如果视觉和题库流程已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
 
 ## 版本回滚速查
 
 ```bash
-git reset --hard v2.1          # 双语帮助说明
+git reset --hard v2.1          # 双语帮助说明（v2.2-resize 未打 tag 前可回到此版本）
 git reset --hard v2.0          # Shell Cup Game 图标
 git reset --hard v1.9          # 多答案 Normal 模式
 git reset --hard v1.8          # 图片文件夹导入

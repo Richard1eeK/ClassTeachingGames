@@ -17,8 +17,9 @@ from game.ui_components import (
 
 
 class Scoreboard:
-    def __init__(self, screen, result):
-        self.screen = screen
+    def __init__(self, window, result):
+        self.window = window
+        self.screen = window.surface
         self.clock = pygame.time.Clock()
         self.score = result["score"]
         self.total = result["total"]
@@ -66,7 +67,7 @@ class Scoreboard:
         while True:
             dt = self.clock.tick(60)
             self.elapsed += dt
-            mouse_pos = pygame.mouse.get_pos()
+            mouse_pos = self.window.get_mouse_pos()
             self.replay_btn.update(mouse_pos, dt)
             self.adjust_btn.update(mouse_pos, dt)
             self.quit_btn.update(mouse_pos, dt)
@@ -74,6 +75,7 @@ class Scoreboard:
             update_floating_decorations(self.decorations, dt)
 
             for event in pygame.event.get():
+                event = self.window.event_to_logical(event)
                 if event.type == pygame.QUIT:
                     return "quit"
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -86,7 +88,7 @@ class Scoreboard:
 
             self._spawn_star_bursts()
             self._draw()
-            pygame.display.flip()
+            self.window.present()
 
     def _spawn_star_bursts(self):
         for i in range(self.target_star_count):

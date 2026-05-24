@@ -17,8 +17,9 @@ from game.ui_components import (
 
 
 class ShellGame:
-    def __init__(self, screen, settings):
-        self.screen = screen
+    def __init__(self, window, settings):
+        self.window = window
+        self.screen = window.surface
         self.clock = pygame.time.Clock()
         self.settings = settings
         self.answer_count = settings.get("answer_count", max(1, settings["num_cups"] - 2))
@@ -187,6 +188,7 @@ class ShellGame:
             dt = self.clock.tick(60)
 
             for event in pygame.event.get():
+                event = self.window.event_to_logical(event)
                 if event.type == pygame.QUIT:
                     return {"score": self.score, "total": self.current_round, "quit": True}
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -194,7 +196,7 @@ class ShellGame:
 
             self._update(dt)
             self._draw()
-            pygame.display.flip()
+            self.window.present()
 
             if self.state == "finished":
                 # 'finished' can be reached either by completing all rounds
@@ -278,7 +280,7 @@ class ShellGame:
         update_floating_decorations(self.decorations, dt)
         self.bubble_phase += dt * 0.003
 
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = self.window.get_mouse_pos()
         self.exit_btn.update(mouse_pos, dt)
         if self.next_btn:
             self.next_btn.update(mouse_pos, dt)

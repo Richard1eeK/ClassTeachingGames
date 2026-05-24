@@ -5,6 +5,27 @@
 
 ---
 
+## 2026-05-24
+
+### v2.2-resize — 自由拖拽窗口缩放
+
+**目标**：先解决一体机上固定 1024×768 窗口显示尴尬的问题；图片性能问题暂不处理，后续单独 debug。
+
+**新建文件**：
+- `game/scaled_window.py` — 统一管理 `RESIZABLE` display、1024×768 逻辑画布、等比缩放居中显示和鼠标坐标反算
+
+**改造文件**：
+- `main.py` — 启动 `ScaledWindow`，三段式场景都接收同一个窗口包装层
+- `game/settings.py` / `game/shell_game.py` / `game/scoreboard.py` — 绘制到逻辑画布，使用包装层 present；鼠标 hover 和点击事件映射回逻辑坐标
+- `docs/PROJECT_STATE.md` / `docs/CHANGELOG_AI.md` — 记录 v2.2-resize 状态、验证和后续图片性能问题
+
+**验证**：
+- `python3 -m py_compile main.py game/*.py` 通过
+- `SDL_VIDEODRIVER=dummy python3 <ScaledWindow coordinate smoke>` 通过：16:9 横屏、竖屏留边和点击事件反算均符合预期
+- 本机 Homebrew Python 3.14 的 `pygame.font` 模块缺失，导致完整 headless 场景渲染无法在 macOS 端完成；Windows 端仍需用户 `git pull` + `build.bat` 实测真实窗口缩放和点击
+
+---
+
 ## 2026-05-22
 
 ### v2.1 — 双语帮助说明

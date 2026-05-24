@@ -29,8 +29,9 @@ SPEED_ICONS = [
 
 
 class SettingsScreen:
-    def __init__(self, screen, initial_settings=None):
-        self.screen = screen
+    def __init__(self, window, initial_settings=None):
+        self.window = window
+        self.screen = window.surface
         self.clock = pygame.time.Clock()
         self.running = True
         self.quit_requested = False
@@ -101,7 +102,7 @@ class SettingsScreen:
             self._handle_events()
             self._update(dt)
             self._draw()
-            pygame.display.flip()
+            self.window.present()
 
         if self.quit_requested:
             return None
@@ -109,6 +110,7 @@ class SettingsScreen:
 
     def _handle_events(self):
         for event in pygame.event.get():
+            event = self.window.event_to_logical(event)
             if event.type == pygame.QUIT:
                 self.quit_requested = True
                 self.running = False
@@ -192,7 +194,7 @@ class SettingsScreen:
             pass
 
     def _update(self, dt):
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = self.window.get_mouse_pos()
         self.help_lang_btn.update(mouse_pos, dt)
         self.help_close_btn.update(mouse_pos, dt)
         if self.help_open:
