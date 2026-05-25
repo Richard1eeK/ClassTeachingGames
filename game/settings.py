@@ -14,7 +14,7 @@ from game.decorations import (
 )
 from game.icons import (
     draw_snail, draw_rabbit, draw_lightning, draw_flame, draw_tornado,
-    draw_info,
+    draw_info, draw_text_icon, draw_image_icon,
 )
 from game.question_bank import read_text_bank_file, scan_image_folder
 from game.help_modal import HelpModal
