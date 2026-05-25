@@ -63,32 +63,45 @@ class Scoreboard:
 
         self.target_star_count = self._get_star_count()
 
-    def run(self):
-        while True:
-            dt = self.clock.tick(60)
-            self.elapsed += dt
-            mouse_pos = self.window.get_mouse_pos()
-            self.replay_btn.update(mouse_pos, dt)
-            self.adjust_btn.update(mouse_pos, dt)
-            self.quit_btn.update(mouse_pos, dt)
-            self.effects.update(dt)
-            update_floating_decorations(self.decorations, dt)
-
-            for event in pygame.event.get():
-                event = self.window.event_to_logical(event)
-                if event.type == pygame.QUIT:
-                    return "quit"
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.replay_btn.is_clicked(event.pos, True):
-                        return "replay"
-                    if self.adjust_btn.is_clicked(event.pos, True):
-                        return "adjust"
-                    if self.quit_btn.is_clicked(event.pos, True):
-                        return "quit"
-
-            self._spawn_star_bursts()
+    def _repaint_during_resize(self):
+        """Called by ScaledWindow during VIDEORESIZE so the window stays live while dragging."""
+        try:
             self._draw()
             self.window.present()
+        except Exception:
+            pass
+
+    def run(self):
+        # Live-repaint callback so the screen redraws while user drags resize handle.
+        self.window.on_resize = self._repaint_during_resize
+        try:
+            while True:
+                dt = self.clock.tick(60)
+                self.elapsed += dt
+                mouse_pos = self.window.get_mouse_pos()
+                self.replay_btn.update(mouse_pos, dt)
+                self.adjust_btn.update(mouse_pos, dt)
+                self.quit_btn.update(mouse_pos, dt)
+                self.effects.update(dt)
+                update_floating_decorations(self.decorations, dt)
+
+                for event in pygame.event.get():
+                    event = self.window.event_to_logical(event)
+                    if event.type == pygame.QUIT:
+                        return "quit"
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if self.replay_btn.is_clicked(event.pos, True):
+                            return "replay"
+                        if self.adjust_btn.is_clicked(event.pos, True):
+                            return "adjust"
+                        if self.quit_btn.is_clicked(event.pos, True):
+                            return "quit"
+
+                self._spawn_star_bursts()
+                self._draw()
+                self.window.present()
+        finally:
+            self.window.on_resize = None
 
     def _spawn_star_bursts(self):
         for i in range(self.target_star_count):

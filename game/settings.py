@@ -122,12 +122,18 @@ class SettingsScreen:
         self.speed_labels = {1: "Slow", 2: "Medium", 3: "Fast", 4: "Ultra", 5: "Insane"}
 
     def run(self):
-        while self.running:
-            dt = self.clock.tick(60)
-            self._handle_events()
-            self._update(dt)
-            self._draw()
-            self.window.present()
+        # Register live-repaint callback so the screen redraws while the user
+        # is still dragging the resize handle (OS blocks the event loop otherwise).
+        self.window.on_resize = self._repaint_during_resize
+        try:
+            while self.running:
+                dt = self.clock.tick(60)
+                self._handle_events()
+                self._update(dt)
+                self._draw()
+                self.window.present()
+        finally:
+            self.window.on_resize = None
 
         if self.quit_requested:
             return None
@@ -229,6 +235,14 @@ class SettingsScreen:
             self.status_message = f"Import failed: {str(e)[:40]}"
             self.status_color = T.SV_RED
             self.status_timer = 3000
+
+    def _repaint_during_resize(self):
+        """Called by ScaledWindow during VIDEORESIZE so the window stays live while dragging."""
+        try:
+            self._draw()
+            self.window.present()
+        except Exception:
+            pass
 
     def _update(self, dt):
         mouse_pos = self.window.get_mouse_pos()

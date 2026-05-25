@@ -1,5 +1,5 @@
 import pygame
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Callable
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
@@ -14,6 +14,9 @@ class ScaledWindow:
         self.offset: Tuple[int, int] = (0, 0)
         self.scaled_size: Tuple[int, int] = self.logical_size
         self._scaled_surface: Optional[pygame.Surface] = None
+        # Callback fired during VIDEORESIZE so callers can repaint immediately
+        # (window dragging on macOS/Windows blocks the event loop until released).
+        self.on_resize: Optional[Callable[[], None]] = None
         self._update_viewport()
 
     def event_to_logical(self, event: pygame.event.Event) -> pygame.event.Event:
@@ -22,6 +25,13 @@ class ScaledWindow:
             self.window = pygame.display.set_mode((max(1, size[0]), max(1, size[1])), pygame.RESIZABLE)
             self._scaled_surface = None
             self._update_viewport()
+            # Trigger an immediate repaint so the window doesn't appear frozen
+            # while the user is still dragging the resize handle.
+            if self.on_resize is not None:
+                try:
+                    self.on_resize()
+                except Exception:
+                    pass
 
         if hasattr(event, "pos"):
             data = event.dict.copy()
@@ -44,7 +54,9 @@ class ScaledWindow:
             else:
                 if self._scaled_surface is None or self._scaled_surface.get_size() != self.scaled_size:
                     self._scaled_surface = pygame.Surface(self.scaled_size).convert()
-                pygame.transform.scale(self.surface, self.scaled_size, self._scaled_surface)
+                # smoothscale gives crisp anti-aliased output when shrinking;
+                # plain scale (nearest-neighbour) makes everything look blurry/blocky.
+                pygame.transform.smoothscale(self.surface, self.scaled_size, self._scaled_surface)
                 self.window.blit(self._scaled_surface, self.offset)
         pygame.display.flip()
 

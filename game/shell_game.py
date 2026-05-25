@@ -189,30 +189,43 @@ class ShellGame:
                 self.anim.add_swap(self.cups[a], self.cups[b], self.swap_duration)
                 self.anim.add_pause(80)
 
-    def run(self):
-        running = True
-        while running:
-            dt = self.clock.tick(60)
-
-            for event in pygame.event.get():
-                event = self.window.event_to_logical(event)
-                if event.type == pygame.QUIT:
-                    return {"score": self.score, "total": self.current_round, "quit": True}
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    self._handle_click(event.pos)
-
-            self._update(dt)
+    def _repaint_during_resize(self):
+        """Called by ScaledWindow during VIDEORESIZE so the window stays live while dragging."""
+        try:
             self._draw()
             self.window.present()
+        except Exception:
+            pass
 
-            if self.state == "finished":
-                # 'finished' can be reached either by completing all rounds
-                # or by clicking Exit mid-game; current_round reflects how
-                # many rounds were actually completed.
-                completed = self.current_round
-                if completed >= self.num_rounds:
-                    completed = self.num_rounds
-                return {"score": self.score, "total": completed, "quit": False}
+    def run(self):
+        # Live-repaint callback so the screen redraws while user drags resize handle.
+        self.window.on_resize = self._repaint_during_resize
+        try:
+            running = True
+            while running:
+                dt = self.clock.tick(60)
+
+                for event in pygame.event.get():
+                    event = self.window.event_to_logical(event)
+                    if event.type == pygame.QUIT:
+                        return {"score": self.score, "total": self.current_round, "quit": True}
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        self._handle_click(event.pos)
+
+                self._update(dt)
+                self._draw()
+                self.window.present()
+
+                if self.state == "finished":
+                    # 'finished' can be reached either by completing all rounds
+                    # or by clicking Exit mid-game; current_round reflects how
+                    # many rounds were actually completed.
+                    completed = self.current_round
+                    if completed >= self.num_rounds:
+                        completed = self.num_rounds
+                    return {"score": self.score, "total": completed, "quit": False}
+        finally:
+            self.window.on_resize = None
 
         return {"score": self.score, "total": self.current_round, "quit": True}
 
