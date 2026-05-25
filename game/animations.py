@@ -1,11 +1,23 @@
 import pygame
 import math
+from functools import lru_cache
 from game import theme as T
 from game.assets import load_image
 from game.ui_components import get_font
 
 TARGET_CARD_FILL = (255, 255, 255)
 TARGET_CARD_TEXT = (20, 20, 20)
+
+
+@lru_cache(maxsize=128)
+def _cached_smoothscale(surface_id, width, height, surface_ref):
+    """Cache smoothscale results. surface_ref is a weak reference holder (not used in cache key)."""
+    return pygame.transform.smoothscale(surface_ref, (width, height))
+
+
+def get_scaled_image(surface, target_width, target_height):
+    """Get a cached smoothscaled version of the surface."""
+    return _cached_smoothscale(id(surface), target_width, target_height, surface)
 
 
 def fit_text_surface(text, max_width, max_height, start_size, min_size=10):
@@ -55,6 +67,8 @@ class Cup:
         self.ball_type = "text"
         self._cached_cup_sprite = None
         self._cached_size = None
+        self._shadow_cache = {}
+        self._glow_cache = {}
 
     def draw(self, surface, show_ball=False):
         cup_y = self.y - self.lift_offset
@@ -65,22 +79,32 @@ class Cup:
         shadow_w = int(self.width * (1.0 + self.lift_offset / 300))
         shadow_h = max(6, 14 - self.lift_offset // 18)
         shadow_alpha = max(40, 110 - self.lift_offset // 2)
-        sh_surf = pygame.Surface((shadow_w * 2, shadow_h * 2), pygame.SRCALPHA)
-        pygame.draw.ellipse(sh_surf, (*T.SHADOW_DARK, shadow_alpha),
-                            (0, 0, shadow_w * 2, shadow_h * 2))
-        surface.blit(sh_surf, (cx - shadow_w, ground_y - shadow_h))
+
+        # Cache shadow surface by size
+        shadow_key = (shadow_w, shadow_h, shadow_alpha)
+        if shadow_key not in self._shadow_cache:
+            sh_surf = pygame.Surface((shadow_w * 2, shadow_h * 2), pygame.SRCALPHA)
+            pygame.draw.ellipse(sh_surf, (*T.SHADOW_DARK, shadow_alpha),
+                                (0, 0, shadow_w * 2, shadow_h * 2))
+            self._shadow_cache[shadow_key] = sh_surf
+        surface.blit(self._shadow_cache[shadow_key], (cx - shadow_w, ground_y - shadow_h))
 
         # gold glow under cup (when target reveal)
         if self.glow > 0.01:
             glow_r = int(self.width * 1.2)
-            glow_surf = pygame.Surface((glow_r * 2, glow_r * 2), pygame.SRCALPHA)
-            for i in range(6):
-                a = int(40 * self.glow * (1 - i / 6))
-                pygame.draw.circle(glow_surf,
-                                   (T.GOLD[0], T.GOLD[1], T.GOLD[2], a),
-                                   (glow_r, glow_r), glow_r - i * 6)
-            surface.blit(glow_surf, (cx - glow_r, cup_y + self.height // 2 - glow_r),
-                         special_flags=pygame.BLEND_PREMULTIPLIED if False else 0)
+            glow_key = glow_r
+            if glow_key not in self._glow_cache:
+                glow_surf = pygame.Surface((glow_r * 2, glow_r * 2), pygame.SRCALPHA)
+                for i in range(6):
+                    a = int(40 * (1 - i / 6))
+                    pygame.draw.circle(glow_surf,
+                                       (T.GOLD[0], T.GOLD[1], T.GOLD[2], a),
+                                       (glow_r, glow_r), glow_r - i * 6)
+                self._glow_cache[glow_key] = glow_surf
+
+            glow_surf = self._glow_cache[glow_key].copy()
+            glow_surf.set_alpha(int(255 * self.glow))
+            surface.blit(glow_surf, (cx - glow_r, cup_y + self.height // 2 - glow_r))
 
         cup_sprite = load_image("assets", "pixel", "cup.png")
         if cup_sprite:
@@ -143,7 +167,7 @@ class Cup:
                 img_w, img_h = img.get_size()
                 scale = min(max_size / img_w, max_size / img_h)
                 new_w, new_h = int(img_w * scale), int(img_h * scale)
-                scaled = pygame.transform.smoothscale(img, (new_w, new_h))
+                scaled = get_scaled_image(img, new_w, new_h)
                 img_rect = scaled.get_rect(center=(cx, ball_y))
                 surface.blit(scaled, img_rect)
 
@@ -188,7 +212,7 @@ class MultiIntroBall:
                 img = target["content"]
                 iw, ih = img.get_size()
                 scale = min((inner.width - 8) / iw, (inner.height - 8) / ih)
-                scaled = pygame.transform.smoothscale(img, (max(1, int(iw * scale)), max(1, int(ih * scale))))
+                scaled = get_scaled_image(img, max(1, int(iw * scale)), max(1, int(ih * scale)))
                 surf.blit(scaled, scaled.get_rect(center=inner.center))
         surf.set_alpha(int(255 * max(0.0, min(1.0, self.alpha))))
         surface.blit(surf, (int(self.x - surf.get_width() // 2), int(self.y - surf.get_height() // 2)))
@@ -246,7 +270,7 @@ class IntroBall:
                 max_size = int(radius * 1.7)
                 iw, ih = img.get_size()
                 s = min(max_size / iw, max_size / ih)
-                scaled = pygame.transform.smoothscale(img, (int(iw * s), int(ih * s)))
+                scaled = get_scaled_image(img, int(iw * s), int(ih * s))
                 irect = scaled.get_rect(center=(cx, cy))
                 ball_surf.blit(scaled, irect)
 

@@ -28,6 +28,33 @@ SPEED_ICONS = [
 ]
 
 
+def normalize_settings(settings):
+    """Validate and clamp all settings to safe ranges."""
+    if not settings:
+        return {}
+
+    normalized = {}
+
+    # Clamp answer_count: 1-5
+    answer_count = max(1, min(5, settings.get("answer_count", 1)))
+    normalized["answer_count"] = answer_count
+
+    # Clamp num_cups: must be >= answer_count + 2, max 9
+    num_cups = max(answer_count + 2, min(9, settings.get("num_cups", answer_count + 2)))
+    normalized["num_cups"] = num_cups
+
+    # Clamp num_rounds: 1-50
+    normalized["num_rounds"] = max(1, min(50, settings.get("num_rounds", 5)))
+
+    # Clamp speed_level: 1-5
+    normalized["speed_level"] = max(1, min(5, settings.get("speed_level", 2)))
+
+    # Copy items list
+    normalized["items"] = list(settings.get("items", []))
+
+    return normalized
+
+
 class SettingsScreen:
     def __init__(self, window, initial_settings=None):
         self.window = window
@@ -36,13 +63,13 @@ class SettingsScreen:
         self.running = True
         self.quit_requested = False
 
-        # Read defaults from initial_settings (preserve previous round's choices)
-        init = initial_settings or {}
-        init_answers = max(1, min(5, init.get("answer_count", max(1, init.get("num_cups", 3) - 2))))
-        init_cups = max(init_answers + 2, min(9, init.get("num_cups", init_answers + 2)))
+        # Normalize and validate initial_settings
+        init = normalize_settings(initial_settings or {})
+        init_answers = init.get("answer_count", 1)
+        init_cups = init.get("num_cups", 3)
         init_rounds = init.get("num_rounds", 5)
         init_speed = init.get("speed_level", 2)
-        init_items = list(init.get("items", []))
+        init_items = init.get("items", [])
 
         # Left card: Answers / Cups / Rounds / Speed
         self.left_card = Card(50, 130, 430, 510, title="Game Settings")
@@ -76,6 +103,11 @@ class SettingsScreen:
         self.manual_items = init_items
         self.scroll_offset = 0
         self._delete_btn_rects = []  # tuples of (rect, item_index)
+
+        # Status message for import feedback
+        self.status_message = ""
+        self.status_timer = 0
+        self.status_color = T.GOLD_DARK
 
         # Hanging title sign
         self.title_sign = WoodSign(SCREEN_W // 2 - 240, 44, 480, 62,
@@ -175,8 +207,17 @@ class SettingsScreen:
                 items = read_text_bank_file(file_path)
                 if items:
                     self.manual_items.extend(items)
-        except Exception:
-            pass
+                    self.status_message = f"Imported {len(items)} items"
+                    self.status_color = T.SV_GREEN
+                    self.status_timer = 3000
+                else:
+                    self.status_message = "No valid items found in file"
+                    self.status_color = T.SV_RED
+                    self.status_timer = 3000
+        except Exception as e:
+            self.status_message = f"Import failed: {str(e)[:40]}"
+            self.status_color = T.SV_RED
+            self.status_timer = 3000
 
     def _import_image_folder(self):
         try:
@@ -190,8 +231,17 @@ class SettingsScreen:
                 items = scan_image_folder(folder_path)
                 if items:
                     self.manual_items.extend(items)
-        except Exception:
-            pass
+                    self.status_message = f"Imported {len(items)} images"
+                    self.status_color = T.SV_GREEN
+                    self.status_timer = 3000
+                else:
+                    self.status_message = "No valid images found"
+                    self.status_color = T.SV_RED
+                    self.status_timer = 3000
+        except Exception as e:
+            self.status_message = f"Import failed: {str(e)[:40]}"
+            self.status_color = T.SV_RED
+            self.status_timer = 3000
 
     def _update(self, dt):
         mouse_pos = self.window.get_mouse_pos()
@@ -207,6 +257,10 @@ class SettingsScreen:
         self.add_image_btn.update(mouse_pos, dt)
         self.text_input.update(dt)
         update_floating_decorations(self.decorations, dt)
+
+        # Update status message timer
+        if self.status_timer > 0:
+            self.status_timer -= dt
 
         can_start = len(self.manual_items) >= 1
         self.start_btn.enabled = can_start
@@ -245,6 +299,17 @@ class SettingsScreen:
 
         self.start_btn.draw(self.screen)
         self._draw_help_entry()
+
+        # Draw status message if active
+        if self.status_timer > 0:
+            status_surf = render_text_outlined(
+                self.status_message, T.FONT_BODY, self.status_color,
+                outline_color=T.WOOD_DARK, outline_w=2, bold=True
+            )
+            status_x = SCREEN_W // 2 - status_surf.get_width() // 2
+            status_y = SCREEN_H - 160
+            self.screen.blit(status_surf, (status_x, status_y))
+
         if self.help_open:
             self._draw_help_modal()
 

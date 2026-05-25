@@ -7,6 +7,7 @@ from game.theme import SCREEN_W, SCREEN_H
 from game.animations import Cup, AnimationManager, IntroBall, MultiIntroBall
 from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_heart, draw_door
 from game.effects import EffectsManager
+from game.assets import load_external_image
 from game.decorations import (
     get_wood_background, draw_parchment_card, draw_wood_plank,
     draw_speech_bubble, make_floating_decorations,
@@ -46,6 +47,10 @@ class ShellGame:
         self.selected_cups = []
         self.show_result = False
         self.result_correct = False
+
+        # Reusable surfaces to avoid per-frame allocation
+        self._layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        self._overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         self.next_btn = None
         self.intro_ball = None
         self.intro_active = False  # True while showing/flying the big ball
@@ -107,12 +112,11 @@ class ShellGame:
             intro_content = target_content
             cup.ball_type = target_type
             if target_type == "image":
-                try:
-                    img = pygame.image.load(target_content).convert_alpha()
-                    img = pygame.transform.smoothscale(img, (360, 360))
+                img = load_external_image(target_content, max_size=360)
+                if img:
                     cup.ball_content = img
                     intro_content = img
-                except Exception:
+                else:
                     target_type = "text"
                     cup.ball_type = "text"
                     fallback_name = os.path.basename(target_content)
@@ -311,14 +315,15 @@ class ShellGame:
         # Apply effect-based screen shake (offset everything below)
         sx, sy = self.effects.get_shake_offset()
 
-        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        layer = self._layer
+        layer.fill((0, 0, 0, 0))  # Clear previous frame
         self._draw_hud(layer)
         self._draw_status(layer)
         self._draw_cups(layer)
 
         # Intro overlay: dim background + draw the big ball above cups
         if self.state == "intro" and self.intro_ball is not None:
-            overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            overlay = self._overlay
             overlay.fill(T.INTRO_OVERLAY)
             layer.blit(overlay, (0, 0))
             # "Memorize this!" caption while ball is held large at center

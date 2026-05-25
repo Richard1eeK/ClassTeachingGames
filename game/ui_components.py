@@ -79,8 +79,8 @@ def get_font(size, bold=False, text=""):
 
 
 @lru_cache(maxsize=256)
-def render_text_outlined(text, size, color, outline_color=T.WOOD_DARK, outline_w=2, bold=False):
-    """Render text with a thick outline (like Stardew dialog text)."""
+def _render_text_outlined_cached(text, size, color, outline_color=T.WOOD_DARK, outline_w=2, bold=False):
+    """Internal cached version - returns the same Surface object."""
     font = get_font(size, bold=bold, text=text)
     base = font.render(text, True, color)
     w, h = base.get_size()
@@ -94,6 +94,15 @@ def render_text_outlined(text, size, color, outline_color=T.WOOD_DARK, outline_w
             out.blit(outline_surf, (pad + dx, pad + dy))
     out.blit(base, (pad, pad))
     return out
+
+
+def render_text_outlined(text, size, color, outline_color=T.WOOD_DARK, outline_w=2, bold=False):
+    """Render text with a thick outline (like Stardew dialog text).
+
+    Returns a copy of the cached Surface to prevent pollution from set_alpha() calls.
+    """
+    cached = _render_text_outlined_cached(text, size, color, outline_color, outline_w, bold)
+    return cached.copy()
 
 
 class Button:

@@ -1,5 +1,6 @@
 import os
 import sys
+from functools import lru_cache
 
 import pygame
 
@@ -7,6 +8,30 @@ import pygame
 _image_cache = {}
 _nineslice_cache = {}
 _tile_cache = {}
+
+
+@lru_cache(maxsize=128)
+def load_external_image(path, max_size=None):
+    """Load and cache an external image file (user-provided images).
+
+    Args:
+        path: Absolute path to the image file
+        max_size: If provided, scale image to fit within (max_size, max_size) while preserving aspect ratio
+
+    Returns:
+        pygame.Surface or None if loading fails
+    """
+    try:
+        img = pygame.image.load(path).convert_alpha()
+        if max_size and img:
+            w, h = img.get_size()
+            if w > max_size or h > max_size:
+                scale = min(max_size / w, max_size / h)
+                new_w, new_h = int(w * scale), int(h * scale)
+                img = pygame.transform.smoothscale(img, (new_w, new_h))
+        return img
+    except Exception:
+        return None
 
 
 def resource_path(*parts):
