@@ -5,16 +5,16 @@ import os
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
 from game.animations import Cup, AnimationManager, IntroBall, MultiIntroBall
-from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_heart, draw_door
+from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_door
 from game.effects import EffectsManager
 from game.assets import load_external_image
 from game.decorations import (
-    get_wood_background, draw_parchment_card, draw_wood_plank,
+    get_wood_background, draw_wood_plank,
     draw_speech_bubble, make_floating_decorations,
     update_floating_decorations, draw_floating_decorations,
 )
 from game.ui_components import (
-    Button, get_font, render_text_outlined,
+    Button, render_text_outlined,
 )
 
 

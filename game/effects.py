@@ -3,8 +3,7 @@ import pygame
 import random
 import math
 from game import theme as T
-from game.icons import draw_star, draw_heart, draw_sparkle
-from game.ui_components import get_font
+from game.icons import draw_star, draw_heart
 
 
 class Particle:

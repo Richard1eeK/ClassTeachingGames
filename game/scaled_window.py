@@ -1,21 +1,22 @@
 import pygame
+from typing import Tuple, Optional
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
 
 
 class ScaledWindow:
-    def __init__(self, width=SCREEN_W, height=SCREEN_H):
-        self.logical_size = (width, height)
-        self.window = pygame.display.set_mode(self.logical_size, pygame.RESIZABLE)
-        self.surface = pygame.Surface(self.logical_size).convert()
-        self.scale = 1.0
-        self.offset = (0, 0)
-        self.scaled_size = self.logical_size
-        self._scaled_surface = None
+    def __init__(self, width: int = SCREEN_W, height: int = SCREEN_H) -> None:
+        self.logical_size: Tuple[int, int] = (width, height)
+        self.window: pygame.Surface = pygame.display.set_mode(self.logical_size, pygame.RESIZABLE)
+        self.surface: pygame.Surface = pygame.Surface(self.logical_size).convert()
+        self.scale: float = 1.0
+        self.offset: Tuple[int, int] = (0, 0)
+        self.scaled_size: Tuple[int, int] = self.logical_size
+        self._scaled_surface: Optional[pygame.Surface] = None
         self._update_viewport()
 
-    def event_to_logical(self, event):
+    def event_to_logical(self, event: pygame.event.Event) -> pygame.event.Event:
         if event.type == pygame.VIDEORESIZE:
             size = getattr(event, "size", (getattr(event, "w", 1), getattr(event, "h", 1)))
             self.window = pygame.display.set_mode((max(1, size[0]), max(1, size[1])), pygame.RESIZABLE)
@@ -28,10 +29,10 @@ class ScaledWindow:
             return pygame.event.Event(event.type, data)
         return event
 
-    def get_mouse_pos(self):
+    def get_mouse_pos(self) -> Tuple[int, int]:
         return self.to_logical_pos(pygame.mouse.get_pos())
 
-    def present(self):
+    def present(self) -> None:
         self._update_viewport()
         win_size = self.window.get_size()
         if win_size == self.logical_size:
@@ -47,13 +48,13 @@ class ScaledWindow:
                 self.window.blit(self._scaled_surface, self.offset)
         pygame.display.flip()
 
-    def to_logical_pos(self, pos):
+    def to_logical_pos(self, pos: Tuple[int, int]) -> Tuple[int, int]:
         self._update_viewport()
         x = (pos[0] - self.offset[0]) * self.logical_size[0] / max(1, self.scaled_size[0])
         y = (pos[1] - self.offset[1]) * self.logical_size[1] / max(1, self.scaled_size[1])
         return int(x), int(y)
 
-    def _update_viewport(self):
+    def _update_viewport(self) -> None:
         win_w, win_h = self.window.get_size()
         logical_w, logical_h = self.logical_size
         scale = min(max(1, win_w) / logical_w, max(1, win_h) / logical_h)

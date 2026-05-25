@@ -1,16 +1,10 @@
 """Stardew Valley themed UI components."""
 import pygame
 import os
-import math
 from functools import lru_cache
 
 from game import theme as T
-from game.theme import (
-    SCREEN_W, SCREEN_H,
-    BG_COLOR, BLACK, WHITE, GRAY, DARK_GRAY,
-    CANDY_PINK, CANDY_BLUE, CANDY_GREEN, CANDY_YELLOW,
-    CANDY_PURPLE, CANDY_ORANGE, CANDY_RED, CUP_COLOR,
-)
+from game.theme import SCREEN_W, SCREEN_H
 from game.assets import draw_nineslice
 from game.decorations import draw_wood_plank, draw_parchment_card
 
@@ -354,7 +348,4 @@ __all__ = [
     "Button", "Slider", "TextInput", "Card", "WoodSign",
     "get_font", "render_text_outlined",
     "SCREEN_W", "SCREEN_H",
-    "BG_COLOR", "BLACK", "WHITE", "GRAY", "DARK_GRAY",
-    "CANDY_PINK", "CANDY_BLUE", "CANDY_GREEN", "CANDY_YELLOW",
-    "CANDY_PURPLE", "CANDY_ORANGE", "CANDY_RED", "CUP_COLOR",
 ]

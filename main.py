@@ -1,6 +1,7 @@
 import pygame
 import sys
 import os
+from typing import Optional, Dict, Any
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
@@ -11,7 +12,7 @@ from game.assets import resource_path
 from game.scaled_window import ScaledWindow
 
 
-def set_window_icon():
+def set_window_icon() -> None:
     icon_path = resource_path("assets", "images", "shell_cup_game_icon.png")
     try:
         icon = pygame.image.load(icon_path)
@@ -20,7 +21,7 @@ def set_window_icon():
         pass
 
 
-def main():
+def main() -> None:
     pygame.init()
     pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP,
                               pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP,
@@ -30,8 +31,8 @@ def main():
     window = ScaledWindow()
     screen = window.surface
 
-    last_settings = None
-    skip_settings = False  # set true to skip Settings screen and reuse last_settings
+    last_settings: Optional[Dict[str, Any]] = None
+    skip_settings: bool = False
 
     while True:
         if skip_settings and last_settings is not None:
@@ -54,9 +55,7 @@ def main():
         if action == "quit":
             break
         elif action == "replay":
-            # Skip Settings, go straight back into ShellGame with same config
             skip_settings = True
-        # action == "adjust": fall through and re-show Settings with last_settings
 
     pygame.quit()
     sys.exit()

@@ -3,16 +3,16 @@ import math
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
-from game.icons import draw_star, draw_cross, draw_replay, draw_door, draw_gear
+from game.icons import draw_star, draw_replay, draw_door, draw_gear
 from game.animations import ease_out_back, ease_out_elastic
 from game.effects import EffectsManager
 from game.decorations import (
-    get_wood_background, draw_parchment_card, draw_wood_plank,
+    get_wood_background, draw_parchment_card,
     make_floating_decorations, update_floating_decorations,
     draw_floating_decorations,
 )
 from game.ui_components import (
-    Button, get_font, render_text_outlined, WoodSign,
+    Button, render_text_outlined, WoodSign,
 )
 
 
