@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
@@ -107,14 +108,16 @@ class ShellGame:
             cup.ball_type = target_type
             if target_type == "image":
                 try:
-                    img = pygame.image.load(target_content)
+                    img = pygame.image.load(target_content).convert_alpha()
+                    img = pygame.transform.smoothscale(img, (360, 360))
                     cup.ball_content = img
                     intro_content = img
                 except Exception:
                     target_type = "text"
                     cup.ball_type = "text"
-                    cup.ball_content = target_content
-                    intro_content = target_content
+                    fallback_name = os.path.basename(target_content)
+                    cup.ball_content = fallback_name
+                    intro_content = fallback_name
             else:
                 cup.ball_content = target_content
             target = {"type": target_type, "content": intro_content, "hint": item.get("hint", "")}

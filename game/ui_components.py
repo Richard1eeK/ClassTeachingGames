@@ -2,6 +2,7 @@
 import pygame
 import os
 import math
+from functools import lru_cache
 
 from game import theme as T
 from game.theme import (
@@ -18,7 +19,9 @@ def _contains_cjk(text):
     return any("\u4e00" <= ch <= "\u9fff" for ch in str(text))
 
 
+@lru_cache(maxsize=32)
 def get_font(size, bold=False, text=""):
+    has_cjk = _contains_cjk(text)
     cjk_font_paths = [
         "/System/Library/Fonts/PingFang.ttc",
         "/System/Library/Fonts/STHeiti Light.ttc",
@@ -27,7 +30,7 @@ def get_font(size, bold=False, text=""):
         "C:/Windows/Fonts/simhei.ttf",
         "C:/Windows/Fonts/simsun.ttc",
     ]
-    if _contains_cjk(text):
+    if has_cjk:
         for path in cjk_font_paths:
             if os.path.exists(path):
                 try:
@@ -75,6 +78,7 @@ def get_font(size, bold=False, text=""):
     return pygame.font.Font(None, size)
 
 
+@lru_cache(maxsize=256)
 def render_text_outlined(text, size, color, outline_color=T.WOOD_DARK, outline_w=2, bold=False):
     """Render text with a thick outline (like Stardew dialog text)."""
     font = get_font(size, bold=bold, text=text)

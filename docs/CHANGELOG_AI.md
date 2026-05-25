@@ -7,7 +7,35 @@
 
 ## 2026-05-24
 
-### v2.2-resize — 自由拖拽窗口缩放
+### v2.3-perf — 性能优化
+
+**目标**：解决一体机上的性能问题（打字延迟约 1 秒、杯子动画掉帧、16-18 张图片无法加载）。不增加新功能，不引入新依赖，不改变核心玩法。
+
+**改造文件**：
+- `game/ui_components.py` — 为 `get_font()` 和 `render_text_outlined()` 添加 LRU 缓存（maxsize=32 和 256），消除每帧重复字体加载和文字渲染
+- `game/shell_game.py` — 图片加载时立即 `convert_alpha()` 并预缩放到 360×360，失败时显示 `basename` 而非完整路径
+- `game/animations.py` — Cup 类添加 `_cached_cup_sprite` 和 `_cached_size`，缓存杯子贴图缩放结果
+- `game/scaled_window.py` — `present()` 优化：窗口=逻辑画布时跳过缩放和填充，直接 blit
+- `main.py` — 添加 `pygame.event.set_allowed()` 过滤事件，只接收必要的 6 种事件类型
+- `docs/PROJECT_STATE.md` / `docs/CHANGELOG_AI.md` — 记录 v2.3-perf 状态和验证
+
+**验证**：
+- `python3 -m py_compile main.py game/ui_components.py game/shell_game.py game/animations.py game/scaled_window.py` 通过
+- Windows 端仍需用户 `git pull` + `build.bat` 实测性能改善（打字无延迟、动画流畅、图片正常显示）
+
+**性能优化清单**（8 项）：
+1. ✅ `get_font()` LRU 缓存
+2. ✅ `render_text_outlined()` LRU 缓存
+3. ✅ Cup sprite 缩放缓存
+4. ✅ 图片预处理（convert_alpha + 预缩放到 360×360）
+5. ✅ 图片加载失败时显示 basename
+6. ✅ ScaledWindow.present 跳过等尺寸缩放
+7. ✅ pygame.event.set_allowed 事件过滤
+8. ⚠️ 杯内图片每帧仍需 smoothscale（因 ball_radius 动态计算），但输入已从原图降为 360×360
+
+---
+
+### v2.2 — 自由拖拽窗口缩放
 
 **目标**：先解决一体机上固定 1024×768 窗口显示尴尬的问题；图片性能问题暂不处理，后续单独 debug。
 
@@ -17,7 +45,7 @@
 **改造文件**：
 - `main.py` — 启动 `ScaledWindow`，三段式场景都接收同一个窗口包装层
 - `game/settings.py` / `game/shell_game.py` / `game/scoreboard.py` — 绘制到逻辑画布，使用包装层 present；鼠标 hover 和点击事件映射回逻辑坐标
-- `docs/PROJECT_STATE.md` / `docs/CHANGELOG_AI.md` — 记录 v2.2-resize 状态、验证和后续图片性能问题
+- `docs/PROJECT_STATE.md` / `docs/CHANGELOG_AI.md` — 记录 v2.2 状态、验证和后续图片性能问题
 
 **验证**：
 - `python3 -m py_compile main.py game/*.py` 通过

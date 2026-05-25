@@ -53,6 +53,8 @@ class Cup:
         self.start_x = x
         self.ball_content = None
         self.ball_type = "text"
+        self._cached_cup_sprite = None
+        self._cached_size = None
 
     def draw(self, surface, show_ball=False):
         cup_y = self.y - self.lift_offset
@@ -82,8 +84,10 @@ class Cup:
 
         cup_sprite = load_image("assets", "pixel", "cup.png")
         if cup_sprite:
-            scaled = pygame.transform.scale(cup_sprite, (self.width, self.height))
-            surface.blit(scaled, (int(cx - self.width // 2), int(cup_y)))
+            if self._cached_size != (self.width, self.height):
+                self._cached_cup_sprite = pygame.transform.scale(cup_sprite, (self.width, self.height))
+                self._cached_size = (self.width, self.height)
+            surface.blit(self._cached_cup_sprite, (int(cx - self.width // 2), int(cup_y)))
         else:
             top_w = int(self.width * 0.72)
             body_pts = [

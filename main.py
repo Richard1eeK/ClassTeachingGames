@@ -22,6 +22,9 @@ def set_window_icon():
 
 def main():
     pygame.init()
+    pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP,
+                              pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP,
+                              pygame.MOUSEMOTION, pygame.VIDEORESIZE])
     pygame.display.set_caption("Shell Cup Game")
     set_window_icon()
     window = ScaledWindow()

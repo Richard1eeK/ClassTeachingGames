@@ -33,14 +33,18 @@ class ScaledWindow:
 
     def present(self):
         self._update_viewport()
-        self.window.fill(T.WOOD_DARK)
-        if self.scaled_size == self.logical_size:
-            self.window.blit(self.surface, self.offset)
+        win_size = self.window.get_size()
+        if win_size == self.logical_size:
+            self.window.blit(self.surface, (0, 0))
         else:
-            if self._scaled_surface is None or self._scaled_surface.get_size() != self.scaled_size:
-                self._scaled_surface = pygame.Surface(self.scaled_size).convert()
-            pygame.transform.scale(self.surface, self.scaled_size, self._scaled_surface)
-            self.window.blit(self._scaled_surface, self.offset)
+            self.window.fill(T.WOOD_DARK)
+            if self.scaled_size == self.logical_size:
+                self.window.blit(self.surface, self.offset)
+            else:
+                if self._scaled_surface is None or self._scaled_surface.get_size() != self.scaled_size:
+                    self._scaled_surface = pygame.Surface(self.scaled_size).convert()
+                pygame.transform.scale(self.surface, self.scaled_size, self._scaled_surface)
+                self.window.blit(self._scaled_surface, self.offset)
         pygame.display.flip()
 
     def to_logical_pos(self, pos):

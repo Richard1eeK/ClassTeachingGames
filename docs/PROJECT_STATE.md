@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v2.1` — 双语帮助说明（当前工作版本 v2.2-resize，待 Windows 实测后打 tag）
+**最新 tag**：`v2.2` — 自由拖拽窗口缩放（当前工作版本 v2.3-perf，性能优化中）
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -98,18 +98,26 @@
 - TXT 导入说明明确要求每行带序号，并提示可截图单词表后用 AI 整理成带序号文本
 - 中文说明优先使用系统中文字体，避免内置英文字体显示方块字
 
-### 自由拖拽窗口缩放（v2.2-resize）
+### 自由拖拽窗口缩放（v2.2）
 - Pygame display 改为 `RESIZABLE`，用户可像普通软件一样拖动窗口边框调整大小
 - 新增逻辑画布包装层：内部仍按 1024×768 绘制，实际窗口等比缩放并居中显示
 - 鼠标位置和点击事件统一从真实窗口坐标反算回逻辑坐标，避免按钮、滑块和杯子点击偏移
 - 非 4:3 窗口会出现左右或上下留边，以避免界面拉伸变形和布局错乱
 
+### 性能优化（v2.3-perf）
+- **字体和文字渲染缓存**：`get_font()` 和 `render_text_outlined()` 添加 LRU 缓存，消除每帧重复字体加载和文字渲染
+- **图片预处理**：导入图片时立即 `convert_alpha()` 并预缩放到 360×360，避免每帧 smoothscale 大原图
+- **Cup sprite 缓存**：杯子贴图缩放结果缓存，避免每帧重复 transform.scale
+- **窗口缩放优化**：`ScaledWindow.present()` 跳过窗口=逻辑画布时的无效缩放和填充
+- **事件过滤**：`pygame.event.set_allowed()` 只接收必要事件，减少事件队列开销
+- 图片加载失败时显示文件名而非完整路径，提升可读性
+
 ## 当前项目状态
 
-- **代码工作目录状态**：`main` 准备推送 v2.2-resize；当前仍有未跟踪文件 `AGENTS.md`，是否纳入仓库待确认
-- **macOS 验证**：`python3 -m py_compile main.py game/*.py` 通过；`ScaledWindow` headless 坐标映射 smoke 通过；本机 Homebrew Python 的 `pygame.font` 缺失，真实窗口/字体渲染仍需 Windows 端确认
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.2-resize 需要重点确认拖动窗口边框缩放、留边显示、按钮/滑块/杯子点击无偏移
-- **当前阻塞**：图片性能问题尚未处理，按用户要求先完成窗口自由缩放；`AGENTS.md` 是否提交待确认
+- **代码工作目录状态**：`main` 准备推送 v2.3-perf；v2.2 已打 tag 作为回滚点
+- **macOS 验证**：所有修改文件通过 `python3 -m py_compile` 编译检查
+- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；v2.3 需要重点确认性能改善（打字无延迟、动画流畅、图片正常显示）
+- **性能目标**：解决一体机上的打字延迟、动画掉帧、16-18 张图片无法加载问题
 
 ## 未完成 / 待确认
 
@@ -130,10 +138,10 @@
 
 ## 下次继续从这里开始
 
-**主线**：等 Windows 端实测 v2.2-resize，确认可自由拖动窗口边框缩放且点击无偏移。
+**主线**：等 Windows 端实测 v2.3-perf，确认性能问题已解决（打字流畅、动画不掉帧、图片正常加载显示）。
 
-**v2.2 后续候选方向**：
-1. 处理图片性能问题：20 张左右 PNG/JPG 导入不应卡死，游戏内按展示尺寸压缩缓存
+**v2.3 后续候选方向**：
+1. 如果性能仍有问题，考虑进一步优化（如内置图片库、更激进的缓存策略）
 2. Windows 端实测 `build.bat` 后 exe 是否能正确玩 1/2/3 Answers 模式
 3. 如果需要更高难度，再加 Strict 模式（点错立即失败）
 4. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
@@ -142,7 +150,8 @@
 ## 版本回滚速查
 
 ```bash
-git reset --hard v2.1          # 双语帮助说明（v2.2-resize 未打 tag 前可回到此版本）
+git reset --hard v2.2          # 自由拖拽窗口缩放
+git reset --hard v2.1          # 双语帮助说明
 git reset --hard v2.0          # Shell Cup Game 图标
 git reset --hard v1.9          # 多答案 Normal 模式
 git reset --hard v1.8          # 图片文件夹导入
