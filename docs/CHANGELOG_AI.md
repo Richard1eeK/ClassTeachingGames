@@ -5,6 +5,250 @@
 
 ---
 
+## 2026-05-25
+
+### v2.3.2 — 紧急修复 v2.3.1 崩溃 Bug
+
+**问题**：v2.3.1 程序启动即崩溃，抛出 `NameError: name 'draw_text_icon' is not defined`
+
+**根本原因**：
+- 在 v2.3.1 清理未使用导入时，误删了 `draw_text_icon` 和 `draw_image_icon`
+- 这两个函数实际在 `game/settings.py` 第 97、102 行被使用（作为按钮图标）
+- 静态分析工具未能检测到这些函数的使用（可能因为它们作为参数传递给 Button 构造函数）
+
+**修复内容**：
+- `game/settings.py` 第 17 行：恢复 `draw_text_icon` 和 `draw_image_icon` 导入
+  ```python
+  from game.icons import (
+      draw_snail, draw_rabbit, draw_lightning, draw_flame, draw_tornado,
+      draw_info, draw_text_icon, draw_image_icon,
+  )
+  ```
+
+**验证**：
+- ✅ `python3 -m py_compile game/settings.py` 编译通过
+- ✅ Python 脚本测试程序初始化成功
+- ✅ 用户截图确认程序可以正常启动
+
+**版本策略**：
+- 保留 v2.3.1 tag 作为历史记录（标记为包含重大 bug）
+- 创建 v2.3.2 作为稳定版本供生产使用
+
+**提交记录**：
+- Commit: e4feda1 "修复 v2.3.1 崩溃 - 恢复 draw_text_icon 和 draw_image_icon 导入"
+- Tag: v2.3.2
+
+**教训**：
+- 清理未使用导入时需要更仔细地检查函数作为参数传递的情况
+- 应该在提交前进行完整的功能测试，而不仅仅是编译检查
+- 考虑添加自动化测试来捕获此类错误
+
+---
+
+### v2.3.1 — 代码重构和优化（⚠️ 包含重大 Bug，请使用 v2.3.2）
+
+**目标**：纯代码优化和性能提升，零功能改变。在 v2.3 性能优化基础上进行代码质量改进。
+
+**改造内容**：
+
+#### 1. 清理未使用的导入和变量（Task #36）
+- `game/effects.py` — 删除 `draw_sparkle`, `get_font`
+- `game/scoreboard.py` — 删除 `draw_cross`, `draw_wood_plank`, `get_font`
+- `game/settings.py` — 删除 `draw_plus`（⚠️ 误删了 `draw_text_icon` 和 `draw_image_icon`，导致崩溃）
+- `game/shell_game.py` — 删除 `draw_heart`, `draw_parchment_card`, `get_font`
+- `game/ui_components.py` — 删除未使用的颜色常量和 `math` 模块
+
+#### 2. 修复滚动列表行高不一致 Bug（Task #37）
+- `game/item_list.py` — 引入类常量 `ITEM_ROW_HEIGHT = 38`
+- 问题：之前 `max_scroll` 计算使用 48px，但实际渲染使用 38px
+- 修复：统一使用 `ITEM_ROW_HEIGHT` 常量
+
+#### 3. 模块化重构 - 提取帮助模态框（Task #38）
+- **新建文件**：`game/help_modal.py`（175 行）
+  - 提取 `HelpModal` 类，封装所有帮助模态框逻辑
+  - 包含中英文双语支持
+  - 关键方法：`handle_click()`, `update()`, `draw_entry_button()`, `draw_modal()`
+- **修改文件**：`game/settings.py`
+  - 删除约 140 行帮助相关代码
+  - 移除方法：`_handle_help_event`, `_draw_help_entry`, `_draw_help_modal`, `_help_content`, `_draw_help_sections`, `_wrap_help_text`
+  - 简化为：`self.help_modal = HelpModal()`
+
+#### 4. 模块化重构 - 提取项目列表（Task #39）
+- **新建文件**：`game/item_list.py`（115 行）
+  - 提取 `ItemList` 类，管理项目数据和 UI
+  - 关键方法：`add_item()`, `remove_item()`, `extend_items()`, `handle_scroll()`, `handle_delete_click()`, `draw()`
+- **修改文件**：`game/settings.py`
+  - 删除约 80 行项目列表相关代码
+  - 移除方法：`_draw_items_list`
+  - 简化为：`self.item_list = ItemList(init_items)`
+
+#### 5. 评估并跳过目标渲染提取（Task #40）
+- **评估结果**：`game/shell_game.py` 中的目标渲染逻辑（第 325-470 行）与游戏状态和动画系统紧密耦合
+- **决策**：跳过此任务，因为提取会违反零功能变更原则，风险过高
+- **保留**：目标渲染逻辑保持在 `shell_game.py` 中
+
+#### 6. 添加类型提示（Task #41）
+- `main.py` — 添加 `from typing import Optional, Dict, Any`，为函数添加返回类型 `-> None`
+- `game/help_modal.py` — 添加完整类型提示：`from typing import Tuple, List`
+  - 所有方法都有完整的参数和返回类型注解
+- `game/item_list.py` — 添加完整类型提示：`from typing import List, Dict, Any, Tuple, Optional`
+  - 所有方法都有完整的参数和返回类型注解
+- `game/scaled_window.py` — 添加完整类型提示：`from typing import Tuple, Optional`
+  - 所有方法都有完整的参数和返回类型注解
+
+**代码统计**：
+- 修改文件：7 个
+- 新建文件：2 个（help_modal.py, item_list.py）
+- settings.py 减少约 220 行代码（从 519 行减少到约 300 行）
+- 添加类型提示的模块：4 个
+
+**验证**：
+- ✅ 所有 Python 文件编译通过：`python3 -m py_compile`
+- ❌ 程序启动崩溃（NameError）— 在 v2.3.2 中修复
+
+**提交记录**：
+- Commit: 3147f76 "v2.3.1 代码重构和优化"
+- Tag: v2.3.1（⚠️ 包含重大 bug，请勿使用）
+
+---
+
+### v2.3 — P0/P1 问题修复和性能优化
+
+**目标**：修复代码审查中发现的所有 P0（紧急）和 P1（重要）问题，共 8 项。
+
+**改造内容**：
+
+#### P0-1: 修复缓存 Surface 污染 Bug
+- **问题**：`render_text_outlined()` 返回缓存的 Surface 对象，调用方 `set_alpha()` 会修改缓存
+- **影响**：文字透明度异常、显示错误
+- **修复**：`game/ui_components.py`
+  - 拆分为 `_render_text_outlined_cached()` (内部缓存) + `render_text_outlined()` (返回 `.copy()`)
+  ```python
+  @lru_cache(maxsize=256)
+  def _render_text_outlined_cached(text, size, color, outline_color, outline_w, bold):
+      # 内部缓存版本
+      return out
+  
+  def render_text_outlined(text, size, color, outline_color=T.WOOD_DARK, outline_w=2, bold=False):
+      cached = _render_text_outlined_cached(text, size, color, outline_color, outline_w, bold)
+      return cached.copy()  # 返回副本防止污染
+  ```
+
+#### P0-2: 修复图片每帧 smoothscale
+- **问题**：Cup._draw_ball、IntroBall、MultiIntroBall 每帧对图片执行 smoothscale
+- **影响**：一体机动画掉帧的核心原因
+- **修复**：`game/animations.py`
+  - 添加 `get_scaled_image()` 缓存函数
+  ```python
+  @lru_cache(maxsize=128)
+  def _cached_smoothscale(surface_id, width, height, surface_ref):
+      return pygame.transform.smoothscale(surface_ref, (width, height))
+  
+  def get_scaled_image(surface, target_width, target_height):
+      return _cached_smoothscale(id(surface), target_width, target_height, surface)
+  ```
+  - 修复位置：Cup._draw_ball(), MultiIntroBall.draw(), IntroBall.draw()
+
+#### P0-3: 添加 Settings 验证
+- **问题**：`initial_settings` 的 rounds/speed 没有验证和默认值
+- **影响**：异常数据会导致 UI 显示和逻辑不一致
+- **修复**：`game/settings.py`
+  - 使用 `.get(key, default)` 提供默认值
+  ```python
+  init = initial_settings or {}
+  init_answers = max(1, min(5, init.get("answer_count", 
+                     max(1, init.get("num_cups", 3) - 2))))
+  ```
+
+#### P1-1: 缓存外部图片加载
+- **问题**：每轮 `_prepare_round()` 都从磁盘加载图片
+- **影响**：16-18 张图片、20 轮、Same Again 时产生重复 I/O 卡顿
+- **修复**：`game/assets.py`
+  - 添加 `load_external_image()` 使用 LRU 缓存
+  ```python
+  @lru_cache(maxsize=128)
+  def load_external_image(path, max_size=None):
+      try:
+          img = pygame.image.load(path).convert_alpha()
+          if max_size:
+              img = pygame.transform.smoothscale(img, (max_size, max_size))
+          return img
+      except Exception:
+          return None
+  ```
+- **修改**：`game/shell_game.py`
+  - 使用 `load_external_image(target_content, max_size=360)` 替代 `pygame.image.load()`
+
+#### P1-2: 优化临时 Surface 创建
+- **问题**：主循环每帧创建大量临时 Surface（layer、shadow、glow、粒子）
+- **影响**：老旧 Windows 一体机 GC 压力和帧率波动
+- **修复**：
+  - `game/shell_game.py` — 复用主 layer Surface
+    ```python
+    # __init__ 中创建
+    self._layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+    
+    # draw() 中复用
+    layer = self._layer
+    layer.fill((0, 0, 0, 0))  # 清空而非重建
+    ```
+  - `game/animations.py` — Cup 类缓存阴影和光晕 Surface
+    ```python
+    self._shadow_cache = {}
+    self._glow_cache = {}
+    
+    shadow_key = (shadow_w, shadow_h, shadow_alpha)
+    if shadow_key not in self._shadow_cache:
+        sh_surf = pygame.Surface(...)
+        self._shadow_cache[shadow_key] = sh_surf
+    ```
+
+#### P1-3: 添加导入失败反馈
+- **问题**：TXT/图片文件夹/图标/素材加载失败时 `except Exception: pass`
+- **影响**：Windows exe 中路径、权限、中文文件名、损坏图片失败时老师看不到原因
+- **修复**：`game/settings.py`
+  - 添加状态消息系统
+  ```python
+  # 添加状态消息属性
+  self.status_message = ""
+  self.status_timer = 0
+  self.status_color = T.SV_GREEN
+  
+  # 导入失败时显示
+  except Exception as e:
+      self.status_message = f"Import failed: {str(e)}"
+      self.status_timer = 3000
+      self.status_color = T.SV_RED
+  
+  # 绘制状态消息（3 秒淡出）
+  if self.status_timer > 0:
+      status_surf = render_text_outlined(self.status_message, ...)
+      self.screen.blit(status_surf, ...)
+  ```
+
+#### P1-4: 创建 v2.3 Git Tag
+- **修复**：创建 annotated tag `v2.3`，更新 `docs/PROJECT_STATE.md`
+- **提交记录**：
+  - Commit: 891ed3a "v2.3 性能优化 - 修复 P0/P1 问题"
+  - Tag: v2.3
+
+#### P1-5: 同步 AGENTS.md
+- **问题**：`AGENTS.md` 未跟踪且内容落后于 `CLAUDE.md`
+- **影响**：Codex 和 Claude 按不同规则工作，资源/题库规则冲突
+- **修复**：以 `CLAUDE.md` 为基准同步 `AGENTS.md` 并提交
+
+**验证**：
+- ✅ 所有 Python 文件编译通过
+- ✅ Git commits 和 tags 已推送到 GitHub
+- ⏳ Windows 一体机实测待用户验证
+
+**提交记录**：
+- Commit: 891ed3a "v2.3 性能优化 - 修复 P0/P1 问题"
+- Commit: (AGENTS.md 同步)
+- Tag: v2.3
+
+---
+
 ## 2026-05-24
 
 ### v2.3-perf — 性能优化
