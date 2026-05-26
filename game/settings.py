@@ -19,6 +19,7 @@ from game.icons import (
 from game.question_bank import read_text_bank_file, scan_image_folder
 from game.help_modal import HelpModal
 from game.item_list import ItemList
+from game.library_browser import LibraryBrowser
 
 
 SPEED_ICONS = [
@@ -28,6 +29,11 @@ SPEED_ICONS = [
     (4, "Ultra", draw_flame, T.SV_RED),
     (5, "Insane", draw_tornado, T.SV_PURPLE),
 ]
+
+
+# Version + author shown bottom-right of the main screen
+APP_VERSION = "v3.0"
+APP_AUTHOR = "by RichardLi"
 
 
 def normalize_settings(settings):
@@ -85,19 +91,44 @@ class SettingsScreen:
                                    self.left_card.rect.width - 68, 1, 5, init_speed, "Speed")
 
         # Right card: content
-        self.right_card = Card(SCREEN_W - 480, 130, 430, 510, title="Your Items")
+        self.right_card = Card(SCREEN_W - 480, 130, 430, 510, title="Materials")
+
+        # Tabs at top of right card (pushes other content down by 50px)
+        tab_y = self.right_card.rect.y + 14
+        tab_w = (self.right_card.rect.width - 32 - 8) // 2  # two tabs side by side
+        self.tab_builtin_btn = Button(
+            self.right_card.rect.x + 16, tab_y, tab_w, 36,
+            "Built-in", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
+        )
+        self.tab_my_btn = Button(
+            self.right_card.rect.x + 16 + tab_w + 8, tab_y, tab_w, 36,
+            "My Library", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
+        )
+        self.active_tab = "builtin"  # default tab
+
+        # Built-in tab: library browser
+        browser_rect = pygame.Rect(
+            self.right_card.rect.x + 16,
+            self.right_card.rect.y + 60,
+            self.right_card.rect.width - 32,
+            self.right_card.rect.height - 76,
+        )
+        self.library_browser = LibraryBrowser(browser_rect, on_use=self._on_library_use)
+
+        # My Library tab: text input + import buttons + item list (shifted down by 50)
+        my_top = self.right_card.rect.y + 60
         self.text_input = TextInput(
-            self.right_card.rect.x + 26, self.right_card.rect.y + 70,
+            self.right_card.rect.x + 26, my_top + 10,
             self.right_card.rect.width - 252, 44, "Type a word and press Enter",
             font_size=T.FONT_CAPTION,
         )
         self.import_text_btn = Button(
-            self.right_card.rect.right - 212, self.right_card.rect.y + 70,
+            self.right_card.rect.right - 212, my_top + 10,
             90, 44, "Import", T.GOLD, T.TEXT_LIGHT, T.FONT_CAPTION,
             icon=draw_text_icon,
         )
         self.add_image_btn = Button(
-            self.right_card.rect.right - 116, self.right_card.rect.y + 70,
+            self.right_card.rect.right - 116, my_top + 10,
             90, 44, "Folder", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION,
             icon=draw_image_icon,
         )
@@ -150,6 +181,11 @@ class SettingsScreen:
                 self.help_modal.handle_event(event)
                 continue
 
+            # Library browser confirm dialog blocks other input when open
+            if self.active_tab == "builtin" and self.library_browser.confirm_open:
+                self.library_browser.handle_event(event)
+                continue
+
             prev_answers = self.answer_slider.value
             self.answer_slider.handle_event(event)
             if self.answer_slider.value != prev_answers:
@@ -160,31 +196,54 @@ class SettingsScreen:
             self.round_slider.handle_event(event)
             self.speed_slider.handle_event(event)
 
-            result = self.text_input.handle_event(event)
-            if result == "enter" and self.text_input.text.strip():
-                self.item_list.add_item({
-                    "type": "text",
-                    "content": self.text_input.text.strip(),
-                    "hint": "",
-                })
-                self.text_input.text = ""
+            # Tab switching (handled before any tab-specific logic)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                if self.tab_builtin_btn.is_clicked(pos, True):
+                    self.active_tab = "builtin"
+                    continue
+                if self.tab_my_btn.is_clicked(pos, True):
+                    self.active_tab = "my_library"
+                    continue
 
-            if event.type == pygame.MOUSEWHEEL:
-                self.item_list.handle_scroll(event, 320)
+            # Built-in tab: delegate events to library browser
+            if self.active_tab == "builtin":
+                if self.library_browser.handle_event(event):
+                    continue
 
+            # My Library tab: text input + import + item list
+            if self.active_tab == "my_library":
+                result = self.text_input.handle_event(event)
+                if result == "enter" and self.text_input.text.strip():
+                    self.item_list.add_item({
+                        "type": "text",
+                        "content": self.text_input.text.strip(),
+                        "hint": "",
+                    })
+                    self.text_input.text = ""
+
+                if event.type == pygame.MOUSEWHEEL:
+                    self.item_list.handle_scroll(event, 320)
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = event.pos
+                    if self.import_text_btn.is_clicked(pos, True):
+                        self._import_text_bank()
+                        continue
+                    if self.add_image_btn.is_clicked(pos, True):
+                        self._import_image_folder()
+                        continue
+                    # delete buttons in items list
+                    if self.item_list.handle_delete_click(pos):
+                        continue
+
+            # Always-active controls (Start, Help)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
                 if self.start_btn.is_clicked(pos, True):
                     self.running = False
-                elif self.import_text_btn.is_clicked(pos, True):
-                    self._import_text_bank()
-                elif self.add_image_btn.is_clicked(pos, True):
-                    self._import_image_folder()
                 elif self.help_modal.btn_rect.collidepoint(pos):
                     self.help_modal.open = True
-                else:
-                    # delete buttons in items list
-                    self.item_list.handle_delete_click(pos)
 
     def _import_text_bank(self):
         try:
@@ -236,6 +295,19 @@ class SettingsScreen:
             self.status_color = T.SV_RED
             self.status_timer = 3000
 
+    def _on_library_use(self, items):
+        """Callback fired by LibraryBrowser when user confirms 'Use this material'.
+
+        Replaces current item list with the selected unit's items and switches
+        to the 'My Library' tab so the teacher can see what was loaded.
+        """
+        self.item_list.items = list(items)
+        self.item_list.scroll_offset = 0
+        self.active_tab = "my_library"
+        self.status_message = f"Loaded {len(items)} items from library"
+        self.status_color = T.SV_GREEN
+        self.status_timer = 3000
+
     def _repaint_during_resize(self):
         """Called by ScaledWindow during VIDEORESIZE so the window stays live while dragging."""
         try:
@@ -253,9 +325,17 @@ class SettingsScreen:
         self.start_btn.update(mouse_pos, dt)
         self.cup_slider.min_val = self.answer_slider.value + 2
         self.cup_slider.value = max(self.cup_slider.value, self.cup_slider.min_val)
-        self.import_text_btn.update(mouse_pos, dt)
-        self.add_image_btn.update(mouse_pos, dt)
-        self.text_input.update(dt)
+
+        # Tab buttons + active tab content
+        self.tab_builtin_btn.update(mouse_pos, dt)
+        self.tab_my_btn.update(mouse_pos, dt)
+        if self.active_tab == "builtin":
+            self.library_browser.update(mouse_pos, dt)
+        else:
+            self.import_text_btn.update(mouse_pos, dt)
+            self.add_image_btn.update(mouse_pos, dt)
+            self.text_input.update(dt)
+
         update_floating_decorations(self.decorations, dt)
 
         # Update status message timer
@@ -290,20 +370,31 @@ class SettingsScreen:
         # speed icons row (under slider)
         self._draw_speed_icons()
 
-        # === Right card: items ===
+        # === Right card: Materials (Tab switching) ===
         self.right_card.draw(self.screen)
-        self.text_input.draw(self.screen)
-        self.import_text_btn.draw(self.screen)
-        self.add_image_btn.draw(self.screen)
 
-        # Draw items list
-        list_rect = pygame.Rect(
-            self.right_card.rect.x + 26,
-            self.right_card.rect.y + 130,
-            self.right_card.rect.width - 52,
-            self.right_card.rect.bottom - 24 - (self.right_card.rect.y + 130)
-        )
-        self.item_list.draw(self.screen, list_rect)
+        # Tab buttons - highlight active one
+        self.tab_builtin_btn.color = T.SV_BLUE_DARK if self.active_tab == "builtin" else T.SV_BLUE
+        self.tab_my_btn.color = T.SV_BLUE_DARK if self.active_tab == "my_library" else T.SV_BLUE
+        self.tab_builtin_btn.draw(self.screen)
+        self.tab_my_btn.draw(self.screen)
+
+        if self.active_tab == "builtin":
+            self.library_browser.draw(self.screen)
+        else:
+            # My Library tab: text input + buttons + items list
+            self.text_input.draw(self.screen)
+            self.import_text_btn.draw(self.screen)
+            self.add_image_btn.draw(self.screen)
+
+            # Draw items list (shifted down by 50 to make room for Tab)
+            list_rect = pygame.Rect(
+                self.right_card.rect.x + 26,
+                self.right_card.rect.y + 180,
+                self.right_card.rect.width - 52,
+                self.right_card.rect.bottom - 24 - (self.right_card.rect.y + 180)
+            )
+            self.item_list.draw(self.screen, list_rect)
 
         self.start_btn.draw(self.screen)
         self.help_modal.draw_entry_button(self.screen)
@@ -318,8 +409,29 @@ class SettingsScreen:
             status_y = SCREEN_H - 160
             self.screen.blit(status_surf, (status_x, status_y))
 
+        # Bottom-right corner: version + author
+        self._draw_credits()
+
         if self.help_modal.open:
             self.help_modal.draw_modal(self.screen)
+
+    def _draw_credits(self):
+        """Draw version + author in the bottom-right corner."""
+        version_surf = render_text_outlined(
+            APP_VERSION, T.FONT_CAPTION, T.TEXT_LIGHT,
+            outline_color=T.WOOD_DARK, outline_w=1, bold=True,
+        )
+        author_surf = render_text_outlined(
+            APP_AUTHOR, T.FONT_CAPTION, T.GOLD_LIGHT,
+            outline_color=T.WOOD_DARK, outline_w=1, bold=False,
+        )
+        margin = 12
+        author_x = SCREEN_W - author_surf.get_width() - margin
+        author_y = SCREEN_H - author_surf.get_height() - margin
+        version_x = SCREEN_W - version_surf.get_width() - margin
+        version_y = author_y - version_surf.get_height() - 2
+        self.screen.blit(version_surf, (version_x, version_y))
+        self.screen.blit(author_surf, (author_x, author_y))
 
     def _draw_answers_helper(self):
         helper = render_text_outlined(
