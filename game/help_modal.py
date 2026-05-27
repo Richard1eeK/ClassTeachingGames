@@ -79,47 +79,63 @@ class HelpModal:
         """Get help content in the current language."""
         if self.lang == "zh":
             return [
-                ("如何设置", [
-                    "用 Answers 选择每一轮有几个正确答案。",
-                    "用 Cups 选择杯子数量。",
-                    "用 Rounds 选择游戏轮数。",
-                    "用 Speed 选择洗牌速度。",
+                ("游戏设置（左侧面板）", [
+                    "Answers：每一轮有几个正确答案（1~5）。",
+                    "Cups：杯子总数量（至少 Answers + 2）。",
+                    "Rounds：总共玩几轮（3~20）。",
+                    "Speed：洗牌速度，共 5 档，越高越快。",
                 ]),
-                ("添加题目", [
-                    "输入单词后按 Enter 添加。",
-                    "点击 Import 从 .txt 文件导入单词。",
-                    ".txt 文件中每行写一个带序号的单词，例如 1. apple、2. banana、3. cat。",
-                    "（可以截图单词表后，用 AI 帮你整理成带序号的文本。）",
-                    "点击 Folder 从文件夹导入图片。",
-                    "至少添加 1 个题目后才能开始游戏。",
+                ("素材来源（右侧面板）", [
+                    "Resources 标签：浏览内置材料库。",
+                    "  - Bright Spark：按词汇类别组织的闪卡（Activities、Colours、Numbers 等 37 类）。",
+                    "  - High Flyer：按 Level / Unit 组织的文字和图片库。",
+                    "  - 切换 Flashcards / Words 可筛选图片或文字材料。",
+                    "  - 点击类别再点 Use this material 即可加载。",
+                    "Manually Type-in 标签：手动输入或导入自己的题目。",
+                    "  - 输入单词后按 Enter 添加。",
+                    "  - 点击 Import 从 .txt 文件批量导入（每行一个带序号单词，如 1. apple）。",
+                    "  - 点击 Folder 从文件夹导入图片。",
                 ]),
                 ("怎么玩", [
-                    "先认真看目标答案。",
+                    "认真看目标答案（intro 阶段会放大展示）。",
                     "观察杯子洗牌。",
-                    "点击你认为正确的杯子。",
-                    "如果全部选对，就得 1 分。",
+                    "点击正确的杯子。多答案模式下需选满全部目标。",
+                    "全部选对得 1 分；揭示阶段会显示正确答案卡片。",
+                ]),
+                ("快捷操作", [
+                    "结算页面 Same Again 用相同素材直接再玩。",
+                    "Adjust 回到设置页面调整参数后继续。",
+                    "游戏中途可按右上角 Exit 随时退出。",
                 ]),
             ]
         return [
-            ("How to Set Up", [
-                "Choose how many correct answers you want with Answers.",
-                "Choose how many cups you want with Cups.",
-                "Choose the number of rounds with Rounds.",
-                "Choose the shuffle speed with Speed.",
+            ("Game Settings (left panel)", [
+                "Answers: how many correct answers per round (1–5).",
+                "Cups: total number of cups (at least Answers + 2).",
+                "Rounds: how many rounds to play (3–20).",
+                "Speed: shuffle speed, 5 levels from Slow to Insane.",
             ]),
-            ("Add Your Items", [
-                "Type a word and press Enter to add it.",
-                "Click Import to add words from a .txt file.",
-                "In the .txt file, put one word on each line with a number, like 1. apple, 2. banana, 3. cat.",
-                "(You can screenshot a word list and ask AI to turn it into numbered text.)",
-                "Click Folder to add pictures from a folder.",
-                "You need at least one item to start the game.",
+            ("Materials (right panel)", [
+                "Resources tab: browse the built-in library.",
+                "  - Bright Spark: flashcards organised by topic (37 categories like Activities, Colours, Numbers).",
+                "  - High Flyer: word lists and images organised by Level / Unit.",
+                "  - Switch between Flashcards / Words to filter by type.",
+                "  - Pick a category or unit, then click Use this material.",
+                "Manually Type-in tab: type or import your own items.",
+                "  - Type a word and press Enter to add it.",
+                "  - Click Import to load a .txt file (one numbered word per line, e.g. 1. apple).",
+                "  - Click Folder to load images from a folder.",
             ]),
             ("How to Play", [
-                "Look carefully at the target answer or answers.",
+                "Look carefully at the target answers (shown large during the intro).",
                 "Watch the cups shuffle.",
-                "Click the cup or cups you think are correct.",
-                "If all your choices are correct, you score 1 point.",
+                "Click the correct cup(s). In multi-answer mode, pick all targets.",
+                "Get them all right to score 1 point. Reveal shows answer cards.",
+            ]),
+            ("Quick Actions", [
+                "Scoreboard: Same Again replays with the same items.",
+                "Adjust returns to settings to tweak parameters.",
+                "Exit button (top-right) quits the game at any time.",
             ]),
         ]
 
