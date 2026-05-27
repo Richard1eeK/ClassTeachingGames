@@ -1,0 +1,40 @@
+1.air conditioner
+2.bed
+3.bookcase
+4.chair
+5.chest
+6.clock
+7.closet
+8.computer
+9.cupboard
+10.desk
+11.door
+12.fridge
+13.lamp
+14.shower
+15.sink
+16.sofa
+17.stove
+18.table
+19.toilet
+20.TV
+21.washing machine
+22.window
+23.balcony
+24.bathroom
+25.bedroom
+26.dining room
+27.kitchen
+28.living room
+29.above
+30.behind
+31.between
+32.in
+33.in front of
+34.on
+35.under
+36.Listen carefully
+37.Don't eat in class
+38.Open your books
+39.Let's play a game
+40.Put your books under the desk

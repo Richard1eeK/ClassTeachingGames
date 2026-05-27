@@ -68,6 +68,8 @@ BRIGHT_SPARK_TOPICS = [
     "Weather",
     "Wild Animals",
 ]
+HIGH_FLYER_SERIES = "High Flyer"
+HIGH_FLYER_FLAT_UNIT_RE = re.compile(r"^HF([A-Z])\s+U(\d+)$", re.IGNORECASE)
 
 
 def _library_root() -> str:
@@ -128,6 +130,14 @@ def _has_images(folder: str) -> bool:
     except OSError:
         return False
     return False
+
+
+def _parse_high_flyer_flat_unit(name: str):
+    match = HIGH_FLYER_FLAT_UNIT_RE.match(name)
+    if not match:
+        return None
+    level, unit = match.groups()
+    return f"Level {level.upper()}", f"Unit {int(unit)}"
 
 
 def _list_txt_units(level_dir: str) -> List[str]:
@@ -218,6 +228,11 @@ def scan_library() -> Dict[str, Dict[str, Dict[str, List[str]]]]:
             for level in _list_subdirs(series_dir):
                 level_dir = os.path.join(series_dir, level)
                 if category == CATEGORY_FLASHCARDS:
+                    flat_unit = _parse_high_flyer_flat_unit(level) if series == HIGH_FLYER_SERIES else None
+                    if flat_unit and _has_images(level_dir):
+                        flat_level, flat_unit_name = flat_unit
+                        level_map.setdefault(flat_level, []).append(flat_unit_name)
+                        continue
                     # Flashcards: Unit is a sub-folder containing images
                     units = [
                         unit for unit in _list_subdirs(level_dir)
@@ -229,6 +244,9 @@ def scan_library() -> Dict[str, Dict[str, Dict[str, List[str]]]]:
 
                 if units:
                     level_map[level] = units
+
+            for units in level_map.values():
+                units.sort(key=natural_sort_key)
 
             if level_map:
                 series_map[series] = level_map
@@ -274,6 +292,10 @@ def load_unit(category: str, series: str, level: str, unit: str) -> List[Dict]:
     if category == CATEGORY_FLASHCARDS:
         if series == BRIGHT_SPARK_SERIES and unit == BRIGHT_SPARK_TOPIC_UNIT:
             folder = os.path.join(root, category, series, level)
+        elif series == HIGH_FLYER_SERIES and level.startswith("Level ") and unit.startswith("Unit "):
+            flat_folder = f"HF{level.replace('Level ', '')} U{unit.replace('Unit ', '')}"
+            flat_path = os.path.join(root, category, series, flat_folder)
+            folder = flat_path if os.path.isdir(flat_path) else os.path.join(root, category, series, level, unit)
         else:
             folder = os.path.join(root, category, series, level, unit)
         return scan_image_folder(folder)

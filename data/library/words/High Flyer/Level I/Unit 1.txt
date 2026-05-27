@@ -1,0 +1,32 @@
+1.avoid
+2.collect
+3.complete
+4.defeat
+5.drag
+6.enter
+7.finish
+8.hit
+9.lose
+10.pick up
+11.press
+12.rescue
+13.save
+14.touch
+15.turn on/off
+16.coin
+17.energy
+18.energy pack
+19.key
+20.level
+21.monster
+22.obstacle
+23.points
+24.weapon
+25.button
+26.cell phone
+27.computer
+28.laptop
+29.password
+30.screen
+31.tablet
+32.username

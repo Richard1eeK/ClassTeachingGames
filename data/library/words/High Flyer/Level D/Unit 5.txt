@@ -1,0 +1,25 @@
+1.aunt
+2.brother
+3.classmate
+4.cousin
+5.father/dad
+6.friend
+7.grandfather/grandpa
+8.grandmother/grandma
+9.great-grandfather
+10.great-grandmother
+11.mother/mom
+12.sister
+13.twins
+14.uncle
+15.bald
+16.curly hair
+17.fat
+18.glasses
+19.handsome
+20.old
+21.pretty
+22.short
+23.straight hair
+24.thin
+25.young

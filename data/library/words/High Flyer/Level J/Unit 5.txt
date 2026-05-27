@@ -1,0 +1,28 @@
+1.bungee jumping
+2.caving
+3.hang gliding
+4.rock climbing
+5.scuba diving
+6.skateboarding
+7.skydiving
+8.amazing
+9.awesome
+10.dangerous
+11.exciting
+12.exhausting
+13.fun
+14.scared
+15.scary
+16.go hiking
+17.go fishing
+18.make a fire
+19.sleep under the stars
+20.build a snowman
+21.go sledding
+22.go ice skating
+23.make snow angels
+24.Cool!
+25.Oh dear!
+26.Oh no!
+27.Uh-huh
+28.Wow!

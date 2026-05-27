@@ -1,0 +1,35 @@
+1.ant
+2.bee
+3.beetle
+4.butterfly
+5.caterpillar
+6.fly
+7.grasshopper
+8.ladybug
+9.mosquito
+10.moth
+11.scorpion
+12.slug
+13.snail
+14.spider
+15.worm
+16.bark
+17.branches
+18.flower
+19.fruit
+20.grass
+21.leaves
+22.petals
+23.pollen
+24.root
+25.soil
+26.stem
+27.trunk
+28.ant nest
+29.eggs
+30.hive
+31.spider web
+32.pincers
+33.shell
+34.tail
+35.wings

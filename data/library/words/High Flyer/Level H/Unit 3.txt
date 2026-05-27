@@ -1,0 +1,32 @@
+1.cough
+2.earache
+3.fever
+4.headache
+5.runny nose
+6.sneezing
+7.sore throat
+8.spots
+9.stomach ache
+10.toothache
+11.a cold
+12.chicken pox
+13.the flu
+14.food poisoning
+15.hay fever
+16.broken arm
+17.broken leg
+18.burn
+19.cut
+20.sprained ankle
+21.sprained wrist
+22.bandage
+23.band-aid
+24.cast
+25.cream
+26.cough syrup
+27.injection
+28.medicine
+29.rest
+30.sling
+31.stiches
+32.X-ray

@@ -1,0 +1,39 @@
+1.bus driver
+2.businessman/woman
+3.chef
+4.dentist
+5.doctor
+6.firefighter
+7.hairdresser
+8.nurse
+9.photographer
+10.pilot
+11.police officer
+12.rescue dog
+13.salesperson
+14.teacher
+15.vet
+16.cook food
+17.cut hair
+18.drive a car/fire truck
+19.fix teeth
+20.fly planes
+21.help sick animals
+22.keep people safe
+23.put out fires
+24.sell things
+25.take care of sick people
+26.take photos
+27.teach students
+28.fire station
+29.hospital
+30.mall
+31.office
+32.police station
+33.restaurant
+34.school
+35.store
+36.zoo
+37.fire truck
+38.plane
+39.police car

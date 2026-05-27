@@ -1,0 +1,20 @@
+1.ball
+2.blocks
+3.board game
+4.boat
+5.car
+6.computer game
+7.dinosaur
+8.doll
+9.helicopter
+10.kite
+11.jigsaw puzzle
+12.jump rope
+13.modeling clay
+14.puzzle cube
+15.robot
+16.skateboard
+17.skates
+18.teddy bear
+19.train set
+20.yo-yo

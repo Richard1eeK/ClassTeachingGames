@@ -1,0 +1,39 @@
+1.bay
+2.cave
+3.island
+4.jungle
+5.lake
+6.mountain
+7.port
+8.river
+9.town
+10.village
+11.waterfall
+12.chest
+13.compass
+14.gold
+15.key
+16.palm tree
+17.rope
+18.shipwreck
+19.spade
+20.treasure
+21.treasure map
+22.cross
+23.go over
+24.go straight
+25.stop
+26.turn left
+27.turn right
+28.behind
+29.between
+30.by
+31.in
+32.in front of
+33.near
+34.next to
+35.on
+36.north
+37.south
+38.east
+39.west

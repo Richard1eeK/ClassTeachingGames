@@ -1,0 +1,36 @@
+1.bank
+2.bridge
+3.bus station
+4.crosswalk
+5.hospital
+6.library
+7.movie theater
+8.police station
+9.post office
+10.street
+11.subway station
+12.traffic light
+13.train station
+14.borrow
+15.buy
+16.get
+17.have
+18.meet
+19.play
+20.send
+21.watch
+22.behind
+23.between
+24.in
+25.in front of
+26.near
+27.next to
+28.on
+29.on the corner of
+30.opposite
+31.north
+32.east
+33.south
+34.west
+35.turn left
+36.turn right

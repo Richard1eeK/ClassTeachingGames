@@ -1,0 +1,20 @@
+1.coconut milk
+2.coffee
+3.cola
+4.lemonade
+5.milkshake
+6.orange juice
+7.tea
+8.water
+9.beef
+10.burger
+11.cheese
+12.chicken
+13.cookie
+14.egg
+15.fish
+16.fries
+17.ice cream
+18.pizza
+19.salad
+20.sandwich

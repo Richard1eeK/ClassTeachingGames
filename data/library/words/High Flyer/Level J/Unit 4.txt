@@ -1,0 +1,26 @@
+1.clue
+2.detective
+3.footprints
+4.magnifying glass
+5.ransom note
+6.statue
+7.steal
+8.thief
+9.find out
+10.go over
+11.look into
+12.work out
+13.definitely
+14.it's possible that
+15.perhaps
+16.probably
+17.actually
+18.anyway
+19.look
+20.okay
+21.right
+22.a bit
+23.much
+24.quite
+25.really
+26.so

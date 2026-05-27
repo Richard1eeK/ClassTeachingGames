@@ -1,0 +1,20 @@
+1.do homework
+2.get up
+3.go shopping
+4.go to bed
+5.have breakfast
+6.have dinner
+7.have lunch
+8.play computer games
+9.play sports
+10.play with friends
+11.take a shower
+12.art
+13.computer class
+14.English
+15.geography
+16.history
+17.math
+18.music
+19.P.E
+20.science

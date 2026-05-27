@@ -1,0 +1,32 @@
+1.art club
+2.computer club
+3.climbing club
+4.cooking club
+5.dance club
+6.first aid club
+7.games club
+8.hiking club
+9.kung fu club
+10.music club
+11.pet club
+12.photo club
+13.science club
+14.sewing club
+15.skateboarding club
+16.soccer club
+17.swimming club
+18.art exhibition
+19.barbecue
+20.chess game
+21.fashion show
+22.first aid
+23.dance competition
+24.music concert
+25.science experiment
+26.soccer match
+27.swimming race
+28.cancel
+29.move
+30.plan
+31.sign up
+32.because

@@ -1,0 +1,35 @@
+1.bumper cars
+2.carousel
+3.Ferris wheel
+4.flying swings
+5.haunted house
+6.log flume
+7.pirate ship
+8.river rapids
+9.roller coaster
+10.teacups
+11.bag
+12.bar
+13.car
+14.gate
+15.line
+16.locker
+17.seat belt
+18.ticket
+19.ticket booth
+20.buy
+21.cut in
+22.exit
+23.get in
+24.go
+25.hold
+26.keep
+27.lean out
+28.leave
+29.push
+30.put on
+31.stand up
+32.stay
+33.take
+34.take off
+35.wait

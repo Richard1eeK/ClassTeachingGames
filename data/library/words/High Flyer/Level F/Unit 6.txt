@@ -1,0 +1,16 @@
+1.alien
+2.astronaut
+3.cowboy
+4.dragon
+5.fairy
+6.hero
+7.pirate
+8.princess
+9.queen
+10.robot
+11.vampire
+12.villain
+13.wizard
+14.in the beginning
+15.in the middle
+16.at the end

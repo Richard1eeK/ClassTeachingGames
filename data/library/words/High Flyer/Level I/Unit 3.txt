@@ -1,0 +1,16 @@
+1.fail an exam
+2.improve your grades
+3.memorize information
+4.pass an exam
+5.revise
+6.write notes
+7.be absent
+8.be badly behaved
+9.be well behaved
+10.cheat
+11.get a warning
+12.get detention
+13.get distracted
+14.make your teacher proud
+15.pay attention
+16.waste time

@@ -1,0 +1,32 @@
+1.alien
+2.asteroid
+3.blob
+4.comet
+5.moon
+6.planet
+7.ring
+8.spaceship
+9.star
+10.sun
+11.tentacles
+12.cruel
+13.friendly
+14.hardworking
+15.helpful
+16.horrible
+17.intelligent
+18.kind
+19.mean
+20.shy
+21.break the window
+22.chase after
+23.climb into
+24.creep past
+25.fall down
+26.go through
+27.lock
+28.press the button
+29.run away
+30.shoot the laser
+31.start the engines
+32.trap

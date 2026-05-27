@@ -1,0 +1,25 @@
+1.actor
+2.artist
+3.astronaut
+4.athlete
+5.businessman
+6.businesswoman
+7.dancer
+8.dentist
+9.designer
+10.farmer
+11.journalist
+12.librarian
+13.magician
+14.model
+15.musician
+16.president
+17.race car driver
+18.salesman
+19.saleswoman
+20.scientist
+21.singer
+22.spy
+23.teacher
+24.vet
+25.writer

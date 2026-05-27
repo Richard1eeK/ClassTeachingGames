@@ -1,0 +1,20 @@
+1.camping
+2.diving
+3.elephant ride
+4.guided tour
+5.safari
+6.shopping
+7.surfing
+8.swimming
+9.trekking
+10.whale watching
+11.bridge
+12.castle
+13.cathedral
+14.fountain
+15.market
+16.palace
+17.square
+18.statue
+19.temple
+20.tower

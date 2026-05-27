@@ -1,0 +1,29 @@
+1.apple pie
+2.curry
+3.fried rice
+4.milk
+5.pancakes
+6.soup
+7.spaghetti
+8.steak
+9.bad
+10.delicious
+11.fresh
+12.good
+13.juicy
+14.old
+15.nice
+16.salty
+17.sour
+18.spicy
+19.sweet
+20.bowl
+21.chopsticks
+22.fork
+23.knife
+24.menu
+25.napkin
+26.plate
+27.spoon
+28.waiter
+29.waitress

@@ -1,0 +1,31 @@
+1.action
+2.adventure
+3.animated
+4.comedy
+5.fantasy
+6.horror
+7.martial arts
+8.mystery
+9.romantic
+10.sci-fi
+11.actor
+12.actress
+13.cameraman
+14.director
+15.stuntman
+16.stuntwoman
+17.at the beginning
+18.after that
+19.later on
+20.then
+21.next
+22.at the end
+23.boring
+24.exciting
+25.fun
+26.interesting
+27.scary
+28.quite
+29.really
+30.so
+31.very

@@ -1,0 +1,21 @@
+1.crunches
+2.cycling
+3.jumping jacks
+4.pull-ups
+5.push-ups
+6.running
+7.sit-ups
+8.squats
+9.swimming
+10.kilometers
+11.laps
+12.lengths
+13.gym
+14.pool
+15.track
+16.brush your teeth
+17.do exercise
+18.eat healthy food
+19.eat junk food
+20.go to bed early
+21.go to bed late

@@ -1,0 +1,18 @@
+1.Australia
+2.China
+3.Indonesia
+4.Singapore
+5.Thailand
+6.the UK
+7.the USA
+8.beach
+9.campsite
+10.forest
+11.hotel
+12.mountain
+13.museum
+14.ocean
+15.restaurant
+16.theme park
+17.water park
+18.zoo

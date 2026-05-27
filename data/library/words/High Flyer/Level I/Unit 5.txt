@@ -1,0 +1,20 @@
+1.blizzard
+2.earthquake
+3.flood
+4.mudslide
+5.sandstorm
+6.tornado
+7.tsunami
+8.typhoon
+9.volcano
+10.canned food
+11.cell phone
+12.first aid kit
+13.flashlight
+14.games
+15.board up the windows
+16.bring things indoors
+17.cover your head
+18.get a flashlight
+19.lie under the table
+20.listen to the radio

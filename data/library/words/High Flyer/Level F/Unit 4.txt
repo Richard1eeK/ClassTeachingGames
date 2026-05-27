@@ -1,0 +1,29 @@
+1.art store
+2.bakery
+3.bookstore
+4.clothes store
+5.electronics store
+6.food court
+7.mall
+8.pet store
+9.restrooms
+10.sports store
+11.stationery store
+12.supermarket
+13.batteries
+14.brush
+15.camera
+16.candy
+17.chocolate
+18.comic
+19.dictionary
+20.dog food
+21.memory card
+22.stickers
+23.change
+24.cheap
+25.expensive
+26.half price
+27.on sale
+28.shopping list
+29.70–100

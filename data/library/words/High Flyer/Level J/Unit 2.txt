@@ -1,0 +1,29 @@
+1.round
+2.square
+3.wooden
+4.airplane
+5.bicycle
+6.candle
+7.computer
+8.engine
+9.fireworks
+10.light bulb
+11.paper
+12.printing press
+13.robot
+14.smartphone
+15.tablet computer
+16.telephone
+17.metal
+18.plastic
+19.wood
+20.battery
+21.button
+22.light
+23.remote control
+24.speaker
+25.wheels
+26.circle
+27.rectangle
+28.square
+29.triangle
