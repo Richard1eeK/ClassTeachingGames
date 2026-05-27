@@ -13,17 +13,36 @@ class HelpModal:
     def __init__(self) -> None:
         self.open: bool = False
         self.lang: str = "en"
+        self.scroll_offset: int = 0
+        self._content_height: int = 0
         self.btn_rect: pygame.Rect = pygame.Rect(SCREEN_W - 96, 56, 46, 46)
         self.modal_rect: pygame.Rect = pygame.Rect(132, 106, 760, 556)
         self.lang_btn: Button = Button(self.modal_rect.right - 150, self.modal_rect.y + 24,
                                         92, 38, "中文", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION)
         self.close_btn: Button = Button(self.modal_rect.right - 50, self.modal_rect.y + 24,
                                          32, 38, "X", T.SV_RED, T.TEXT_LIGHT, T.FONT_CAPTION)
+        # Scroll indicator
+        self._scroll_hint_timer: float = 0.0
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Handle events when modal is open."""
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.open = False
+            return
+        if event.type == pygame.MOUSEWHEEL:
+            content_area_h = self.modal_rect.height - 110
+            max_scroll = max(0, self._content_height - content_area_h)
+            self.scroll_offset = max(0, min(max_scroll,
+                                            self.scroll_offset - event.y * 30))
+            self._scroll_hint_timer = 1200
+            return
+        # macOS trackpad button 4/5 scroll
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button in (4, 5):
+            content_area_h = self.modal_rect.height - 110
+            max_scroll = max(0, self._content_height - content_area_h)
+            direction = 1 if event.button == 4 else -1
+            self.scroll_offset = max(0, min(max_scroll,
+                                            self.scroll_offset - direction * 30))
             return
         if event.type != pygame.MOUSEBUTTONDOWN:
             return
@@ -32,9 +51,12 @@ class HelpModal:
             self.open = False
         elif self.lang_btn.is_clicked(pos, True):
             self.lang = "zh" if self.lang == "en" else "en"
+            self.scroll_offset = 0
 
     def update(self, mouse_pos: Tuple[int, int], dt: int) -> None:
         """Update button hover states."""
+        if self._scroll_hint_timer > 0:
+            self._scroll_hint_timer -= dt
         self.lang_btn.update(mouse_pos, dt)
         self.close_btn.update(mouse_pos, dt)
 
@@ -79,75 +101,72 @@ class HelpModal:
         """Get help content in the current language."""
         if self.lang == "zh":
             return [
-                ("游戏设置（左侧面板）", [
-                    "Answers：每一轮有几个正确答案（1~5）。",
-                    "Cups：杯子总数量（至少 Answers + 2）。",
-                    "Rounds：总共玩几轮（3~20）。",
-                    "Speed：洗牌速度，共 5 档，越高越快。",
+                ("游戏设置", [
+                    "Answers：每轮正确答案数量（1~5）。",
+                    "Cups：杯子总数（至少 Answers + 2）。",
+                    "Rounds：游戏轮数（3~20）。",
+                    "Speed：洗牌速度（Slow → Insane 共 5 档）。",
                 ]),
-                ("素材来源（右侧面板）", [
+                ("素材来源", [
                     "Resources 标签：浏览内置材料库。",
-                    "  - Bright Spark：按词汇类别组织的闪卡（Activities、Colours、Numbers 等 37 类）。",
-                    "  - High Flyer：按 Level / Unit 组织的文字和图片库。",
-                    "  - 切换 Flashcards / Words 可筛选图片或文字材料。",
-                    "  - 点击类别再点 Use this material 即可加载。",
-                    "Manually Type-in 标签：手动输入或导入自己的题目。",
-                    "  - 输入单词后按 Enter 添加。",
-                    "  - 点击 Import 从 .txt 文件批量导入（每行一个带序号单词，如 1. apple）。",
-                    "  - 点击 Folder 从文件夹导入图片。",
+                    "  Bright Spark — 37 个词汇类别闪卡。",
+                    "  High Flyer — 按 Level / Unit 组织的文字与图片。",
+                    "  切换 Flashcards / Words 筛选类型。",
+                    "  点击条目 → Use this material 即可加载。",
+                    "Manually Type-in 标签：手动输入或导入。",
+                    "  打字 + Enter 添加；Import 导入 .txt 词库；",
+                    "  Folder 导入图片文件夹。",
                 ]),
                 ("怎么玩", [
-                    "认真看目标答案（intro 阶段会放大展示）。",
-                    "观察杯子洗牌。",
-                    "点击正确的杯子。多答案模式下需选满全部目标。",
-                    "全部选对得 1 分；揭示阶段会显示正确答案卡片。",
-                ]),
-                ("快捷操作", [
-                    "结算页面 Same Again 用相同素材直接再玩。",
-                    "Adjust 回到设置页面调整参数后继续。",
-                    "游戏中途可按右上角 Exit 随时退出。",
+                    "Intro 阶段认真看放大展示的目标答案。",
+                    "观察杯子洗牌，点击正确的杯子。",
+                    "多答案模式需选满全部目标后统一判定。",
+                    "全部选对得 1 分，揭示阶段显示正确答案卡。",
                 ]),
             ]
         return [
-            ("Game Settings (left panel)", [
-                "Answers: how many correct answers per round (1–5).",
-                "Cups: total number of cups (at least Answers + 2).",
-                "Rounds: how many rounds to play (3–20).",
-                "Speed: shuffle speed, 5 levels from Slow to Insane.",
+            ("Game Settings", [
+                "Answers: correct targets per round (1–5).",
+                "Cups: total cups (at least Answers + 2).",
+                "Rounds: number of rounds (3–20).",
+                "Speed: shuffle pace, 5 levels Slow → Insane.",
             ]),
-            ("Materials (right panel)", [
+            ("Materials", [
                 "Resources tab: browse the built-in library.",
-                "  - Bright Spark: flashcards organised by topic (37 categories like Activities, Colours, Numbers).",
-                "  - High Flyer: word lists and images organised by Level / Unit.",
-                "  - Switch between Flashcards / Words to filter by type.",
-                "  - Pick a category or unit, then click Use this material.",
-                "Manually Type-in tab: type or import your own items.",
-                "  - Type a word and press Enter to add it.",
-                "  - Click Import to load a .txt file (one numbered word per line, e.g. 1. apple).",
-                "  - Click Folder to load images from a folder.",
+                "  Bright Spark — 37 topic-based flashcard sets.",
+                "  High Flyer — words & images by Level / Unit.",
+                "  Switch Flashcards / Words to filter by type.",
+                "  Pick an entry → Use this material to load.",
+                "Manually Type-in tab: type or import items.",
+                "  Type + Enter to add; Import to load a .txt list.",
+                "  Folder to load an image folder.",
             ]),
             ("How to Play", [
-                "Look carefully at the target answers (shown large during the intro).",
-                "Watch the cups shuffle.",
-                "Click the correct cup(s). In multi-answer mode, pick all targets.",
-                "Get them all right to score 1 point. Reveal shows answer cards.",
-            ]),
-            ("Quick Actions", [
-                "Scoreboard: Same Again replays with the same items.",
-                "Adjust returns to settings to tweak parameters.",
-                "Exit button (top-right) quits the game at any time.",
+                "Study the target cards shown large during intro.",
+                "Watch the cups shuffle, then click your guess.",
+                "Multi-answer: pick all targets before judging.",
+                "All correct = 1 point. Reveal shows answer cards.",
             ]),
         ]
 
     def _draw_sections(self, screen: pygame.Surface, x: int, y: int, max_w: int) -> None:
-        """Draw help content sections."""
+        """Draw help content sections with clipping and scroll."""
+        content_area = pygame.Rect(
+            self.modal_rect.x + 20, self.modal_rect.y + 90,
+            self.modal_rect.width - 40, self.modal_rect.height - 120,
+        )
+        prev_clip = screen.get_clip()
+        screen.set_clip(content_area)
+
+        base_y = y - self.scroll_offset
+        draw_y = base_y
         for section_title, lines in self._get_content():
             title = render_text_outlined(
                 section_title, T.FONT_BODY, T.TEXT_DARK,
                 outline_color=T.PARCHMENT, outline_w=1, bold=True,
             )
-            screen.blit(title, (x, y))
-            y += 32
+            screen.blit(title, (x, draw_y))
+            draw_y += 32
             number = 1
             for line in lines:
                 is_note = line.startswith("(") or line.startswith("（")
@@ -161,10 +180,28 @@ class HelpModal:
                         wrapped_line, T.FONT_CAPTION, color,
                         outline_color=T.PARCHMENT, outline_w=1, bold=False,
                     )
-                    screen.blit(surf, (x + 18, y))
-                    y += 22
-                y += 1
-            y += 14
+                    screen.blit(surf, (x + 18, draw_y))
+                    draw_y += 22
+                draw_y += 1
+            draw_y += 14
+
+        self._content_height = draw_y - base_y + self.scroll_offset
+
+        screen.set_clip(prev_clip)
+
+        # Scroll indicator
+        content_h = content_area.height
+        if self._content_height > content_h:
+            bar_h = max(30, int(content_h * content_h / self._content_height))
+            max_scroll = self._content_height - content_h
+            bar_y = content_area.y + int(
+                (content_h - bar_h) * self.scroll_offset / max_scroll
+            ) if max_scroll > 0 else content_area.y
+            bar_rect = pygame.Rect(content_area.right - 8, bar_y, 6, bar_h)
+            alpha = min(180, max(60, int(self._scroll_hint_timer / 4))) if self._scroll_hint_timer > 0 else 80
+            bar_surf = pygame.Surface((6, bar_h), pygame.SRCALPHA)
+            bar_surf.fill((*T.WOOD_DARK, alpha))
+            screen.blit(bar_surf, (bar_rect.x, bar_rect.y))
 
     def _wrap_text(self, text: str, size: int, max_w: int) -> List[str]:
         """Wrap text to fit within max width."""
