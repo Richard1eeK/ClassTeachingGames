@@ -4,7 +4,7 @@ import os
 
 from game import theme as T
 from game.theme import SCREEN_W, SCREEN_H
-from game.animations import Cup, AnimationManager, IntroBall, MultiIntroBall
+from game.animations import Cup, AnimationManager, IntroBall, MultiIntroBall, fit_text_surface, get_scaled_image, TARGET_CARD_FILL
 from game.icons import draw_check, draw_cross, draw_eye, draw_star, draw_door
 from game.effects import EffectsManager
 from game.assets import load_external_image
@@ -65,8 +65,30 @@ class ShellGame:
         self.decorations = make_floating_decorations(12, SCREEN_W, SCREEN_H, seed=23)
         self.bubble_phase = 0.0
 
+        # Fair item distribution: shuffle-once, cycle-through queue
+        self._item_queue = []
+        self._refill_item_queue()
+
         self._setup_cups()
         self._prepare_round()
+
+    def _refill_item_queue(self):
+        """Append a fresh shuffled set of item indices to the queue."""
+        if not self.items:
+            return
+        indices = list(range(len(self.items)))
+        random.shuffle(indices)
+        self._item_queue.extend(indices)
+
+    def _pop_items(self, count):
+        """Pop `count` items from the queue, refilling when short."""
+        if not self.items:
+            return [{"type": "text", "content": "?", "hint": ""} for _ in range(count)]
+        while len(self._item_queue) < count:
+            self._refill_item_queue()
+        picked = self._item_queue[:count]
+        self._item_queue = self._item_queue[count:]
+        return [self.items[i] for i in picked]
 
     def _setup_cups(self):
         self.cups = []
@@ -93,10 +115,7 @@ class ShellGame:
         self.selected_cups = []
 
         if self.items:
-            if len(self.items) >= self.answer_count:
-                target_items = random.sample(self.items, self.answer_count)
-            else:
-                target_items = [random.choice(self.items) for _ in range(self.answer_count)]
+            target_items = self._pop_items(self.answer_count)
         else:
             target_items = [{"type": "text", "content": "?", "hint": ""} for _ in range(self.answer_count)]
 
@@ -499,3 +518,43 @@ class ShellGame:
                 or (self.state in ("revealing", "result_shown") and cup.lifted)
             )
             cup.draw(surface, show_ball=show)
+
+        # Draw larger reveal answer cards during reveal
+        if self.state in ("revealing", "result_shown") and self.target_items:
+            self._draw_reveal_cards(surface)
+
+    def _draw_reveal_cards(self, surface):
+        """Draw large answer cards below the cups during reveal/result."""
+        count = len(self.target_items)
+        cup_w = self.cups[0].width if self.cups else 80
+        card_w = max(160, min(240, int(cup_w * 2.4)))
+        card_h = int(card_w * 0.75)
+        gap = 16
+        total_w = card_w * count + gap * (count - 1)
+        start_x = SCREEN_W // 2 - total_w // 2
+
+        ground_y = self.cups[0].y + self.cups[0].height + 12
+        y = ground_y + 44
+
+        for i, item in enumerate(self.target_items):
+            cx = start_x + i * (card_w + gap) + card_w // 2
+            cy = y + card_h // 2
+            outer = pygame.Rect(cx - card_w // 2, cy - card_h // 2, card_w, card_h)
+            shadow = outer.move(4, 5)
+            pygame.draw.rect(surface, (*T.SHADOW_DARK, 80), shadow)
+            pygame.draw.rect(surface, T.WOOD_DARK, outer)
+            inner = outer.inflate(-10, -10)
+            pygame.draw.rect(surface, TARGET_CARD_FILL, inner)
+            pygame.draw.rect(surface, T.GOLD_DARK, inner, 2)
+            if item["type"] == "text":
+                text_surf = fit_text_surface(
+                    item["content"], inner.width - 8, inner.height - 8,
+                    start_size=max(20, int(card_w * 0.18)), min_size=14,
+                )
+                surface.blit(text_surf, text_surf.get_rect(center=inner.center))
+            elif item["type"] == "image" and isinstance(item["content"], pygame.Surface):
+                img = item["content"]
+                iw, ih = img.get_size()
+                scale = min((inner.width - 12) / iw, (inner.height - 12) / ih)
+                scaled = get_scaled_image(img, max(1, int(iw * scale)), max(1, int(ih * scale)))
+                surface.blit(scaled, scaled.get_rect(center=inner.center))

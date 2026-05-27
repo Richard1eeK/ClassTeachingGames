@@ -135,14 +135,14 @@ class Cup:
         if cx is None:
             cx = self.x + self.shake_offset
         ball_y = self.y + self.height - 30
-        ball_radius = min(self.width // 3, 35)
+        ball_radius = min(self.width // 3, 52)
         # ball shadow
         shadow_surf = pygame.Surface((ball_radius * 3, ball_radius), pygame.SRCALPHA)
         pygame.draw.ellipse(shadow_surf, (*T.SHADOW_DARK, 72),
                             (0, 0, ball_radius * 3, ball_radius))
         surface.blit(shadow_surf, (cx - ball_radius * 3 // 2, ball_y + ball_radius // 2))
 
-        card_w = max(ball_radius * 2, min(150, int(self.width * 1.45)))
+        card_w = max(ball_radius * 2, min(200, int(self.width * 1.6)))
         card_h = ball_radius * 2
         card = pygame.Rect(cx - card_w // 2, ball_y - card_h // 2, card_w, card_h)
         pygame.draw.rect(surface, T.WOOD_DARK, card)
@@ -156,14 +156,14 @@ class Cup:
                     self.ball_content,
                     inner.width - 6,
                     inner.height - 4,
-                    start_size=max(16, min(30, ball_radius)),
-                    min_size=8,
+                    start_size=max(18, min(36, ball_radius)),
+                    min_size=10,
                 )
                 text_rect = text_surf.get_rect(center=inner.center)
                 surface.blit(text_surf, text_rect)
             elif self.ball_type == "image" and isinstance(self.ball_content, pygame.Surface):
                 img = self.ball_content
-                max_size = int(ball_radius * 1.5)
+                max_size = int(ball_radius * 2.2)
                 img_w, img_h = img.get_size()
                 scale = min(max_size / img_w, max_size / img_h)
                 new_w, new_h = int(img_w * scale), int(img_h * scale)
