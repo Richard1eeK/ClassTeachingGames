@@ -90,7 +90,7 @@ class ItemList:
                     display = display[:21] + "…"
                 txt = render_text_outlined(
                     f"{i + 1}. {display}", T.FONT_CAPTION, T.TEXT_DARK,
-                    outline_color=T.WOOD_DARK, outline_w=2, bold=True,
+                    outline_color=T.PARCHMENT_DARK, outline_w=1, bold=False,
                 )
                 screen.blit(txt, (icon_x + 22, row_rect.centery - txt.get_height() // 2))
 

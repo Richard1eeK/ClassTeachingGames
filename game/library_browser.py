@@ -330,9 +330,8 @@ class LibraryBrowser:
         is_expanded = (self.expanded_series == series)
         label = f"{series} Categories" if self._is_bright_spark_series(series) else series
         text = ("▼ " if is_expanded else "▶ ") + label
-        color = T.GOLD_DARK if self._is_bright_spark_series(series) else T.SV_BLUE_DARK
         return self._draw_row(screen, text, y, indent=0, kind="series",
-                              payload={"series": series}, color=color, bold=True)
+                              payload={"series": series}, color=T.SV_BLUE_DARK, bold=True)
 
     def _draw_level_row(self, screen, series: str, level: str, y: int) -> int:
         is_expanded = (self.expanded_level == level)
@@ -350,7 +349,7 @@ class LibraryBrowser:
                        and sel[3] == unit)
         return self._draw_row(screen, unit, y, indent=36, kind="unit",
                               payload={"series": series, "level": level, "unit": unit},
-                              color=T.WOOD_DARK, bold=True, selected=is_selected)
+                              color=T.TEXT_DARK, bold=False, selected=is_selected)
 
     def _draw_bright_spark_topic_row(self, screen, series: str, topic: str, unit: str, y: int) -> int:
         sel = self.selected
@@ -361,7 +360,7 @@ class LibraryBrowser:
                        and sel[3] == unit)
         return self._draw_row(screen, topic, y, indent=18, kind="bright_spark_topic",
                               payload={"series": series, "level": topic, "unit": unit},
-                              color=T.TEXT_DARK, bold=True, selected=is_selected)
+                              color=T.TEXT_DARK, bold=False, selected=is_selected)
 
     def _draw_row(self, screen, text: str, y: int, indent: int, kind: str,
                   payload: dict, color=None, bold: bool = True, selected: bool = False) -> int:
@@ -381,7 +380,7 @@ class LibraryBrowser:
         if selected:
             color = T.WOOD_DARK
         surf = render_text_outlined(text, T.FONT_CAPTION, color,
-                                    outline_color=T.PARCHMENT, outline_w=2, bold=bold)
+                                    outline_color=T.PARCHMENT, outline_w=1, bold=bold)
         screen.blit(surf, (self.rect.x + 8 + indent, y + (LIST_ROW_HEIGHT - surf.get_height()) // 2))
 
         self._row_rects.append((row_rect, kind, payload))
@@ -412,7 +411,7 @@ class LibraryBrowser:
                 hint_text = "Pick a Unit to preview"
             hint = render_text_outlined(hint_text,
                                         T.FONT_CAPTION, T.TEXT_MUTED,
-                                        outline_color=T.PARCHMENT, outline_w=1, bold=True)
+                                        outline_color=T.PARCHMENT, outline_w=1, bold=False)
             screen.blit(hint, (self.rect.x + 4, info_y))
 
     def _draw_confirm_dialog(self, screen: pygame.Surface):
