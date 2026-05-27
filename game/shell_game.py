@@ -335,7 +335,7 @@ class ShellGame:
             is_last = self.current_round + 1 >= self.num_rounds
             btn_text = "View Results" if is_last else "Next Round"
             self.next_btn = Button(
-                SCREEN_W // 2 - 100, SCREEN_H - 76, 200, 50,
+                SCREEN_W - 210, SCREEN_H // 2 - 25, 190, 50,
                 btn_text, T.SV_GREEN, T.TEXT_LIGHT, T.FONT_HEADING,
             )
 
