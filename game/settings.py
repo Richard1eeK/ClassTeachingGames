@@ -383,8 +383,8 @@ class SettingsScreen:
             active_btn = self.tab_builtin_btn
         else:
             active_btn = self.tab_my_btn
-        border_rect = pygame.Rect(active_btn.x - 3, active_btn.y - 3,
-                                  active_btn.w + 6, active_btn.h + 6)
+        border_rect = pygame.Rect(active_btn.rect.x - 3, active_btn.rect.y - 3,
+                                  active_btn.rect.w + 6, active_btn.rect.h + 6)
         pygame.draw.rect(self.screen, T.GOLD, border_rect, 3)
 
         if self.active_tab == "builtin":
