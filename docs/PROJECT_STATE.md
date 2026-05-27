@@ -1,10 +1,12 @@
 # 项目状态 - PROJECT_STATE
 
-> 最后更新：2026-05-24
+> 最后更新：2026-05-27
 
 ## 当前版本
 
-**最新 tag**：`v3.0` — 内置材料库 + 主界面版本号（当前工作版本 v3.1，Bright Spark 分类整理中）
+**最新 tag**：`v3.1` — Bright Spark 按词汇类别整理（当前工作版本 v3.4.1，素材库已完整导入）
+
+**素材库基准版本（无素材库）**：`v2.4`
 
 **部署形态**：macOS 开发 + Windows exe（PyInstaller `--onefile --windowed`）
 
@@ -120,10 +122,11 @@
 
 ## 当前项目状态
 
-- **代码工作目录状态**：`main` 已进入 v3.0 内置材料库后续整理；Bright Spark flashcards 已按词汇类别建好 37 个分类货架
-- **macOS 验证**：本次 Bright Spark 分类改造已通过 `python3 -m py_compile game/library.py game/library_browser.py game/settings.py` 和库索引 smoke 检查
-- **Windows 验证**：每个版本 push 后由用户在 Windows 端 `git pull` + `build.bat` 实测；本次需重点确认 Built-in → Flashcards → Bright Spark Categories 的真实点击和图片加载
-- **素材状态**：Bright Spark 分类目前是 `.gitkeep` 占位目录，等待填入各类别图片；空分类会显示但不会启用 `Use this material`
+- **代码版本**：`main` 位于 v3.4.1，素材库和课堂交互打磨基本完成
+- **素材库**：Bright Spark 284 张闪卡（33/37 类有内容）+ High Flyer 1,233 张图片 + 42 个词库文件
+- **macOS 验证**：全天所有改动通过 py_compile + smoke test
+- **Windows 验证**：用户下次 `git pull` + `build.bat` 需重点确认 Resources 浏览器交互、答案展示尺寸、Next 按钮位置
+- **版本号**：v3.4.1 显示于主界面右下角
 
 ## 未完成 / 待确认
 
@@ -144,15 +147,14 @@
 
 ## 下次继续从这里开始
 
-**主线**：把 Bright Spark 各类别图片填入对应分类目录后，在 Windows 端实测 Built-in 材料库入口和 exe 打包行为。
+**主线**：Windows 端 build.bat 实测 v3.4.1，确认 Resources 浏览器 / 答案卡尺寸 / Next 按钮位置 / 帮助弹窗滚轮均正常。
 
 **后续候选方向**：
-1. 将 Bright Spark 图片素材按 37 个词汇类别填充到对应目录
-2. Windows 端实测 `build.bat` 后 exe 是否能正确显示 Bright Spark Categories 并加载图片
-3. 如果性能仍有问题，考虑进一步优化（如更激进的图片缓存策略）
-4. 如果需要更高难度，再加 Strict 模式（点错立即失败）
-5. 如需更强图片题库：按文件名生成 hint、递归扫描子文件夹、或 TXT 引用图片文件夹
-6. 如果视觉和题库流程已接受，下一步可以接音效系统；`assets` 打包路径已经准备好
+1. Animal Parts / Days / Jobs & Responsibilities / Shapes 四类 BS 闪卡补充
+2. Phonics 内容如需纳入，可单独开系列
+3. 音效系统（assets/sounds/ 已预留，build.bat 已打包）
+4. Strict 模式（多答案点错立即失败）
+5. 更多游戏类型
 
 ## 版本回滚速查
 

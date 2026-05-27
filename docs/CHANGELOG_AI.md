@@ -7,10 +7,18 @@
 
 ## 版本总览
 
-从 v1.0-stardew (2026-05-20) 到 v2.3.2 (2026-05-25)，共 17 个版本，历时 6 天。
+从 v1.0-stardew (2026-05-20) 到 v3.4.1 (2026-05-27)，共 26 个版本，历时 8 天。
 
 | 版本 | 日期 | 主题 | 类型 |
 |------|------|------|------|
+| **v3.4.1** | 2026-05-27 | 帮助弹窗滚轮 + 面板加高 | ✨ 功能 |
+| **v3.4** | 2026-05-27 | 更新游戏说明书 | 📖 文档 |
+| **v3.3.2** | 2026-05-27 | 字体收敛 + Next 按钮移位 | 🔧 修复 |
+| **v3.3** | 2026-05-27 | 标签改名 + 滚轮修复 + 字体层级 | ✨ 功能 |
+| **v3.2** | 2026-05-27 | 答案公平分发 + 展示尺寸放大 + 揭示卡片 | 🔧 修复 |
+| **素材导入** | 2026-05-27 | Bright Spark 284 张 + High Flyer 1275 个素材 | 📦 素材 |
+| **v3.1** | 2026-05-27 | Bright Spark 按词汇类别整理 | ✨ 功能 |
+| **v3.0** | 2026-05-26 | 内置材料库 + 主界面版本号 | ✨ 功能 |
 | **v2.3.2** | 2026-05-25 | 紧急修复 v2.3.1 崩溃 Bug | 🔧 修复 |
 | **v2.3.1** | 2026-05-25 | 代码重构和优化（⚠️ 包含重大 Bug） | ♻️ 重构 |
 | **v2.3** | 2026-05-25 | P0/P1 问题修复和性能优化 | ⚡ 性能 |
@@ -35,27 +43,70 @@
 - **v1.7-v1.9**：题库系统（TXT 导入 → 图片文件夹 → 多答案模式）
 - **v2.0-v2.1**：用户体验（游戏图标 + 双语帮助）
 - **v2.2-v2.3**：性能与适配（窗口缩放 + 一体机性能优化 + 代码重构）
+- **v3.0-v3.4**：内置材料库（High Flyer + Bright Spark 37 类） + 课堂可用性打磨
 
 ---
 
 ## 2026-05-27
 
-### v3.1 — Bright Spark flashcards 按词汇类别整理
+全天 9 个版本（v3.1 → v3.4.1），主线：**内置素材库重组 + 课堂可用性打磨**。
 
-**目标**：用户希望 `data/library/flashcards/Bright Spark` 不再按 Level/Unit 作为主要入口，而是按词汇类别组织，且排除 Phonics 相关内容。
+### v3.1 — Bright Spark 按词汇类别整理
+
+**决策**：Bright Spark 不再按 Level/Unit，而是按词汇类别组织；Phonics 排除。
 
 **改造文件**：
-- `data/library/flashcards/Bright Spark/**` — 保留 37 个词汇类别目录，每个目录用 `.gitkeep` 作为可填充货架
-- `game/library.py` — 固定 Bright Spark 类别顺序，扫描时排除 Phonics 名称，并把 Bright Spark topic 目录作为可展示分类
-- `game/library_browser.py` — Built-in 浏览器中 Bright Spark 改为 `Bright Spark Categories` → Category 两级选择，不再把内部占位值显示成 Unit
-- `game/settings.py` — 主界面版本号更新为 v3.1
-- `docs/PROJECT_STATE.md` / `docs/CHANGELOG_AI.md` — 记录当前素材库结构、验证和后续填充任务
+- `data/library/flashcards/Bright Spark/**` — 37 个词汇类别目录 + .gitkeep 货架
+- `game/library.py` — BRIGHT_SPARK_TOPICS 固定顺序、Phonics 过滤、Topic 扫描
+- `game/library_browser.py` — Bright Spark Categories → Category 两级选择
+
+### 素材导入 — High Flyer 词库 + 图片
+
+- High Flyer Level C–J 文字词库 42 个 .txt + 图片闪卡 1,233 张 PNG
+- `game/library.py` 兼容 HFC U1 扁平目录 → 映射为 Level C / Unit 1
+
+### 素材导入 — Bright Spark 闪卡图片
+
+- 从桌面 BS FC 按 37 个类别对应复制 284 张闪卡
+- 有内容的分类自动删除 .gitkeep
+
+### v3.2 — 答案公平分发 + 展示尺寸放大
+
+**Bug ① 分布不均**：`_prepare_round` 从 random.sample 改为洗牌队列 _pop_items，smoke 验证 spread=0
+
+**Bug ② 答案太小**：杯内 ball_radius 35→52 (+50%)，图片缩放 1.5x→2.2x，卡片宽 150→200
+
+**Bug ③ 揭露看不清**：新增 _draw_reveal_cards()，杯子下方 160–240px 大号答案卡
+
+### v3.3 — 标签改名 + 滚轮修复 + 字体层级
+
+- "Built-in" → "Resources" / "My Library" → "Manually Type-in"
+- 活动标签 3px 金色边框
+- macOS 触控板滚轮误触修复（拦截 button 4/5）
+- 浏览器字体加粗 + 层级颜色区分
+- **回滚**：过度加粗导致模糊 → 只保留 Series 加粗 + outline_w=1
+
+### v3.3.2 — Next 按钮移位
+
+- Next Round 从底部正中移到右侧 (SCREEN_W-210, SCREEN_H/2-25)，不挡答案卡
+
+### v3.4 — 游戏说明书重写
+
+- 从旧三段改为四段：设置 / 素材来源 / 玩法 / 快捷操作
+- 覆盖 Resources（Bright Spark 37 类 + High Flyer）+ Manually Type-in
+- 中英文双语同步
+
+### v3.4.1 — 帮助弹窗滚轮 + 面板加高
+
+- 面板 556→616px，四段完整可见
+- 滚轮滚动 + 触控板兼容 + 右侧滚动条指示器
 
 **验证**：
-- ✅ `python3 -m py_compile game/library.py game/library_browser.py game/settings.py` 通过
-- ✅ 库索引 smoke 通过：Bright Spark 返回 37 个分类，顺序从 Activities 到 Wild Animals，Phonics 未进入列表
-- ⚠️ 当前 Bright Spark 分类目录只有 `.gitkeep` 占位；分类会显示，但没有图片前 `Use this material` 不会启用
-- ⏳ Windows 端仍需 `git pull` + `build.bat` 实测 exe 中 Built-in → Flashcards → Bright Spark Categories 的真实交互
+- ✅ 全天所有 Python 文件编译通过
+- ✅ 库索引 smoke：Bright Spark 37 类顺序正确、Phonics 排除
+- ✅ 答案分布 smoke：新算法 spread=0 vs 旧算法 spread=6
+- ⏳ Windows 端 build.bat 实测待用户确认
+
 
 ---
 
