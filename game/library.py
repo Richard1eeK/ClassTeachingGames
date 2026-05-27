@@ -4,11 +4,13 @@ Folder layout under data/library/:
 
     data/library/
       flashcards/{Series}/{Level}/{Unit}/*.png|jpg|...
+      flashcards/Bright Spark/{Topic}/*.png|jpg|...
       words/{Series}/{Level}/{Unit}.txt
 
 The folder/file names are used directly as display names — no manifest
 file is required. Empty branches are pruned automatically so the UI only
-shows materials that actually have content.
+shows materials that actually have content, except Bright Spark topic folders
+which stay visible as ready-to-fill category shelves.
 """
 import os
 import re
@@ -25,6 +27,47 @@ from game.question_bank import (
 CATEGORY_FLASHCARDS = "flashcards"
 CATEGORY_WORDS = "words"
 CATEGORIES = (CATEGORY_FLASHCARDS, CATEGORY_WORDS)
+BRIGHT_SPARK_SERIES = "Bright Spark"
+BRIGHT_SPARK_TOPIC_UNIT = "__topic__"
+BRIGHT_SPARK_TOPICS = [
+    "Activities",
+    "Adjectives",
+    "Animal Parts",
+    "Body Parts",
+    "Characters",
+    "Classroom Items",
+    "Clothes",
+    "Colours",
+    "Days",
+    "Directions",
+    "Family",
+    "Farm Animals",
+    "Feelings",
+    "Foods and Drinks",
+    "Fruits",
+    "Household Items",
+    "Jobs and Responsibilities",
+    "Jobs",
+    "Months",
+    "Natural World",
+    "Numbers",
+    "Pets",
+    "Places",
+    "Prepositions",
+    "Pronouns",
+    "Rooms",
+    "Routines",
+    "Seasons",
+    "Shapes",
+    "Short Answers",
+    "Sports",
+    "Time of Day",
+    "Toys",
+    "Vegetables",
+    "Verbs",
+    "Weather",
+    "Wild Animals",
+]
 
 
 def _library_root() -> str:
@@ -64,6 +107,11 @@ def _list_subdirs(path: str) -> List[str]:
                and os.path.isdir(os.path.join(path, n))]
     subdirs.sort(key=natural_sort_key)
     return subdirs
+
+
+def _is_phonics_name(name: str) -> bool:
+    """True for folders/files that should stay out of Bright Spark topics."""
+    return "phonics" in name.lower()
 
 
 def _has_images(folder: str) -> bool:
@@ -151,6 +199,22 @@ def scan_library() -> Dict[str, Dict[str, Dict[str, List[str]]]]:
             series_dir = os.path.join(category_root, series)
             level_map: Dict[str, List[str]] = {}
 
+            if category == CATEGORY_FLASHCARDS and series == BRIGHT_SPARK_SERIES:
+                existing_topics = set(_list_subdirs(series_dir))
+                ordered_topics = [topic for topic in BRIGHT_SPARK_TOPICS if topic in existing_topics]
+                extra_topics = [
+                    topic for topic in sorted(existing_topics, key=natural_sort_key)
+                    if topic not in BRIGHT_SPARK_TOPICS
+                ]
+                for topic in ordered_topics + extra_topics:
+                    if _is_phonics_name(topic):
+                        continue
+                    level_map[topic] = [BRIGHT_SPARK_TOPIC_UNIT]
+
+                if level_map:
+                    series_map[series] = level_map
+                continue
+
             for level in _list_subdirs(series_dir):
                 level_dir = os.path.join(series_dir, level)
                 if category == CATEGORY_FLASHCARDS:
@@ -208,7 +272,10 @@ def load_unit(category: str, series: str, level: str, unit: str) -> List[Dict]:
     """
     root = _library_root()
     if category == CATEGORY_FLASHCARDS:
-        folder = os.path.join(root, category, series, level, unit)
+        if series == BRIGHT_SPARK_SERIES and unit == BRIGHT_SPARK_TOPIC_UNIT:
+            folder = os.path.join(root, category, series, level)
+        else:
+            folder = os.path.join(root, category, series, level, unit)
         return scan_image_folder(folder)
     elif category == CATEGORY_WORDS:
         path = os.path.join(root, category, series, level, unit + ".txt")

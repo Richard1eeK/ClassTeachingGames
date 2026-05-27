@@ -15,7 +15,7 @@ USE_BTN_HEIGHT = 44
 
 
 class LibraryBrowser:
-    """Browse the built-in material library: Category / Series / Level / Unit.
+    """Browse the built-in material library.
 
     Handles its own click events and rendering. Calls `on_use(items)` when
     the user clicks "Use this material" and confirms the overwrite dialog.
@@ -41,7 +41,7 @@ class LibraryBrowser:
         self.pending_items: List[Dict] = []
 
         # Cached row hit rects: list of (rect, kind, payload)
-        # kind in {"series", "level", "unit"}
+        # kind in {"series", "level", "unit", "bright_spark_topic"}
         self._row_rects: List[Tuple[pygame.Rect, str, dict]] = []
 
         # Layout: compute top-level button positions
@@ -184,12 +184,11 @@ class LibraryBrowser:
         elif kind == "level":
             level = payload["level"]
             self.expanded_level = None if self.expanded_level == level else level
-        elif kind == "unit":
+        elif kind in ("unit", "bright_spark_topic"):
             series = payload["series"]
             level = payload["level"]
             unit = payload["unit"]
             self.selected = (self.category, series, level, unit)
-            # Preview count by loading items
             try:
                 items = library.load_unit(self.category, series, level, unit)
             except Exception:
@@ -224,6 +223,9 @@ class LibraryBrowser:
         for series, levels in self.index[self.category].items():
             count += 1  # series row
             if self.expanded_series == series:
+                if self._is_bright_spark_series(series):
+                    count += len(levels)  # topic rows
+                    continue
                 for level, units in levels.items():
                     count += 1  # level row
                     if self.expanded_level == level:
@@ -259,6 +261,11 @@ class LibraryBrowser:
         for series, levels in self.index[self.category].items():
             y = self._draw_series_row(screen, series, y)
             if self.expanded_series == series:
+                if self._is_bright_spark_series(series):
+                    for topic, units in levels.items():
+                        unit = units[0] if units else library.BRIGHT_SPARK_TOPIC_UNIT
+                        y = self._draw_bright_spark_topic_row(screen, series, topic, unit, y)
+                    continue
                 for level, units in levels.items():
                     y = self._draw_level_row(screen, series, level, y)
                     if self.expanded_level == level:
@@ -300,9 +307,21 @@ class LibraryBrowser:
         )
         screen.blit(msg, (self.rect.x + 8, self.list_top + 12))
 
+    def _is_bright_spark_series(self, series: str) -> bool:
+        return self.category == library.CATEGORY_FLASHCARDS and series == library.BRIGHT_SPARK_SERIES
+
+    def _showing_bright_spark_topics(self) -> bool:
+        return self._is_bright_spark_series(self.expanded_series or "")
+
+    def _selected_bright_spark_topic(self) -> bool:
+        return (self.selected is not None
+                and self.selected[0] == library.CATEGORY_FLASHCARDS
+                and self.selected[1] == library.BRIGHT_SPARK_SERIES)
+
     def _draw_series_row(self, screen, series: str, y: int) -> int:
         is_expanded = (self.expanded_series == series)
-        text = ("▼ " if is_expanded else "▶ ") + series
+        label = f"{series} Categories" if self._is_bright_spark_series(series) else series
+        text = ("▼ " if is_expanded else "▶ ") + label
         return self._draw_row(screen, text, y, indent=0, kind="series",
                               payload={"series": series}, bold=True)
 
@@ -321,6 +340,17 @@ class LibraryBrowser:
                        and sel[3] == unit)
         return self._draw_row(screen, unit, y, indent=36, kind="unit",
                               payload={"series": series, "level": level, "unit": unit},
+                              bold=False, selected=is_selected)
+
+    def _draw_bright_spark_topic_row(self, screen, series: str, topic: str, unit: str, y: int) -> int:
+        sel = self.selected
+        is_selected = (sel is not None
+                       and sel[0] == self.category
+                       and sel[1] == series
+                       and sel[2] == topic
+                       and sel[3] == unit)
+        return self._draw_row(screen, topic, y, indent=18, kind="bright_spark_topic",
+                              payload={"series": series, "level": topic, "unit": unit},
                               bold=False, selected=is_selected)
 
     def _draw_row(self, screen, text: str, y: int, indent: int, kind: str,
@@ -348,7 +378,10 @@ class LibraryBrowser:
         info_y = self.list_bottom + 6
         if self.selected and self.preview_count > 0:
             cat, series, level, unit = self.selected
-            line1 = f"{series} / {level} / {unit}"
+            if cat == library.CATEGORY_FLASHCARDS and series == library.BRIGHT_SPARK_SERIES:
+                line1 = f"{series} / {level}"
+            else:
+                line1 = f"{series} / {level} / {unit}"
             kind = "images" if cat == "flashcards" else "words"
             line2 = f"{self.preview_count} {kind} loaded"
             l1 = render_text_outlined(line1, T.FONT_CAPTION, T.TEXT_DARK,
@@ -358,7 +391,13 @@ class LibraryBrowser:
             screen.blit(l1, (self.rect.x + 4, info_y))
             screen.blit(l2, (self.rect.x + 4, info_y + 22))
         else:
-            hint = render_text_outlined("Pick a Unit to preview",
+            if self.selected and self._selected_bright_spark_topic():
+                hint_text = "No images in this category yet"
+            elif self._showing_bright_spark_topics():
+                hint_text = "Pick a Category to preview"
+            else:
+                hint_text = "Pick a Unit to preview"
+            hint = render_text_outlined(hint_text,
                                         T.FONT_CAPTION, T.TEXT_MUTED,
                                         outline_color=T.PARCHMENT, outline_w=1, bold=False)
             screen.blit(hint, (self.rect.x + 4, info_y))

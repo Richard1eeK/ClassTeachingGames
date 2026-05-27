@@ -38,6 +38,27 @@
 
 ---
 
+## 2026-05-27
+
+### v3.1 — Bright Spark flashcards 按词汇类别整理
+
+**目标**：用户希望 `data/library/flashcards/Bright Spark` 不再按 Level/Unit 作为主要入口，而是按词汇类别组织，且排除 Phonics 相关内容。
+
+**改造文件**：
+- `data/library/flashcards/Bright Spark/**` — 保留 37 个词汇类别目录，每个目录用 `.gitkeep` 作为可填充货架
+- `game/library.py` — 固定 Bright Spark 类别顺序，扫描时排除 Phonics 名称，并把 Bright Spark topic 目录作为可展示分类
+- `game/library_browser.py` — Built-in 浏览器中 Bright Spark 改为 `Bright Spark Categories` → Category 两级选择，不再把内部占位值显示成 Unit
+- `game/settings.py` — 主界面版本号更新为 v3.1
+- `docs/PROJECT_STATE.md` / `docs/CHANGELOG_AI.md` — 记录当前素材库结构、验证和后续填充任务
+
+**验证**：
+- ✅ `python3 -m py_compile game/library.py game/library_browser.py game/settings.py` 通过
+- ✅ 库索引 smoke 通过：Bright Spark 返回 37 个分类，顺序从 Activities 到 Wild Animals，Phonics 未进入列表
+- ⚠️ 当前 Bright Spark 分类目录只有 `.gitkeep` 占位；分类会显示，但没有图片前 `Use this material` 不会启用
+- ⏳ Windows 端仍需 `git pull` + `build.bat` 实测 exe 中 Built-in → Flashcards → Bright Spark Categories 的真实交互
+
+---
+
 ## 2026-05-25
 
 ### v2.3.2 — 紧急修复 v2.3.1 崩溃 Bug
