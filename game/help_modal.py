@@ -16,7 +16,7 @@ class HelpModal:
         self.scroll_offset: int = 0
         self._content_height: int = 0
         self.btn_rect: pygame.Rect = pygame.Rect(SCREEN_W - 96, 56, 46, 46)
-        self.modal_rect: pygame.Rect = pygame.Rect(132, 106, 760, 556)
+        self.modal_rect: pygame.Rect = pygame.Rect(132, 76, 760, 616)
         self.lang_btn: Button = Button(self.modal_rect.right - 150, self.modal_rect.y + 24,
                                         92, 38, "中文", T.SV_BLUE, T.TEXT_LIGHT, T.FONT_CAPTION)
         self.close_btn: Button = Button(self.modal_rect.right - 50, self.modal_rect.y + 24,
@@ -123,6 +123,11 @@ class HelpModal:
                     "多答案模式需选满全部目标后统一判定。",
                     "全部选对得 1 分，揭示阶段显示正确答案卡。",
                 ]),
+                ("快捷操作", [
+                    "结算页 Same Again 用相同素材直接再玩。",
+                    "Adjust 回到设置页调整参数后继续。",
+                    "右上角 Exit 可随时退出当前游戏。",
+                ]),
             ]
         return [
             ("Game Settings", [
@@ -147,13 +152,18 @@ class HelpModal:
                 "Multi-answer: pick all targets before judging.",
                 "All correct = 1 point. Reveal shows answer cards.",
             ]),
+            ("Quick Actions", [
+                "Same Again replays with the same items.",
+                "Adjust returns to Settings to tweak parameters.",
+                "Exit (top-right) quits the game at any time.",
+            ]),
         ]
 
     def _draw_sections(self, screen: pygame.Surface, x: int, y: int, max_w: int) -> None:
         """Draw help content sections with clipping and scroll."""
         content_area = pygame.Rect(
             self.modal_rect.x + 20, self.modal_rect.y + 90,
-            self.modal_rect.width - 40, self.modal_rect.height - 120,
+            self.modal_rect.width - 40, self.modal_rect.height - 110,
         )
         prev_clip = screen.get_clip()
         screen.set_clip(content_area)
@@ -166,7 +176,7 @@ class HelpModal:
                 outline_color=T.PARCHMENT, outline_w=1, bold=True,
             )
             screen.blit(title, (x, draw_y))
-            draw_y += 32
+            draw_y += 28
             number = 1
             for line in lines:
                 is_note = line.startswith("(") or line.startswith("（")
@@ -181,9 +191,9 @@ class HelpModal:
                         outline_color=T.PARCHMENT, outline_w=1, bold=False,
                     )
                     screen.blit(surf, (x + 18, draw_y))
-                    draw_y += 22
+                    draw_y += 20
                 draw_y += 1
-            draw_y += 14
+            draw_y += 10
 
         self._content_height = draw_y - base_y + self.scroll_offset
 
