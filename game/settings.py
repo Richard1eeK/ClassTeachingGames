@@ -32,7 +32,7 @@ SPEED_ICONS = [
 
 
 # Version + author shown bottom-right of the main screen
-APP_VERSION = "v3.5.1"
+APP_VERSION = "v3.5.2"
 APP_AUTHOR = "by RichardLi"
 
 

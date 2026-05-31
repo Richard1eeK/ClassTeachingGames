@@ -161,8 +161,8 @@ class ItemList:
                 if len(display) > 20:
                     display = display[:19] + "…"
                 txt = render_text_outlined(
-                    f"{i + 1}. {display}", T.FONT_CAPTION, T.TEXT_DARK,
-                    outline_color=T.PARCHMENT_DARK, outline_w=1, bold=False,
+                    f"{i + 1}. {display}", T.FONT_BODY, T.TEXT_DARK,
+                    outline_color=T.PARCHMENT_DARK, outline_w=1, bold=True,
                 )
                 screen.blit(txt, (icon_x + 22, row_rect.centery - txt.get_height() // 2))
 
