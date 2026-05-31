@@ -7,10 +7,11 @@
 
 ## 版本总览
 
-从 v1.0-stardew (2026-05-20) 到 v3.4.1 (2026-05-27)，共 26 个版本，历时 8 天。
+从 v1.0-stardew (2026-05-20) 到 v3.5 (2026-05-31)，共 27 个版本，历时 12 天。
 
 | 版本 | 日期 | 主题 | 类型 |
 |------|------|------|------|
+| **v3.5** | 2026-05-31 | 词汇列表触摸滚动 + 常驻滚动条 | 🔧 修复 |
 | **v3.4.1** | 2026-05-27 | 帮助弹窗滚轮 + 面板加高 | ✨ 功能 |
 | **v3.4** | 2026-05-27 | 更新游戏说明书 | 📖 文档 |
 | **v3.3.2** | 2026-05-27 | 字体收敛 + Next 按钮移位 | 🔧 修复 |
@@ -43,7 +44,31 @@
 - **v1.7-v1.9**：题库系统（TXT 导入 → 图片文件夹 → 多答案模式）
 - **v2.0-v2.1**：用户体验（游戏图标 + 双语帮助）
 - **v2.2-v2.3**：性能与适配（窗口缩放 + 一体机性能优化 + 代码重构）
-- **v3.0-v3.4**：内置材料库（High Flyer + Bright Spark 37 类） + 课堂可用性打磨
+- **v3.0-v3.5**：内置材料库（High Flyer + Bright Spark 37 类） + 课堂可用性打磨
+
+---
+
+## 2026-05-31
+
+### v3.5 — 词汇列表触摸滚动 + 常驻滚动条
+
+**问题**：Manually Type-in 导入大量词汇后，单词列表只能依赖鼠标滚轮；触摸屏拖动列表没有反应，课堂一体机上不方便翻到后面的单词。
+
+**根本原因**：
+- `ItemList` 只处理 `MOUSEWHEEL`，没有处理鼠标/触摸拖动，也没有可拖拽的右侧滚动条。
+- `main.py` 事件过滤没有放行 `MOUSEWHEEL` / `FINGER*` 触摸事件。
+- `ScaledWindow.event_to_logical()` 只转换带 `pos` 的鼠标事件，没有把 Pygame 归一化触摸坐标转成逻辑坐标。
+
+**修复内容**：
+- `game/item_list.py` — 新增列表内容拖动、右侧常驻滚动条、滚动条拖拽、滚轮兼容和删除按钮防误触。
+- `game/settings.py` — My Library 列表事件统一交给 `ItemList.handle_event()`，绘制和事件共用同一个 list rect，版本号更新为 v3.5。
+- `game/scaled_window.py` — FINGERDOWN / FINGERUP / FINGERMOTION 转换为逻辑坐标。
+- `main.py` — 事件过滤放行 `MOUSEWHEEL` 和 `FINGER*`。
+
+**验证**：
+- ✅ `python3 -m py_compile main.py game/settings.py game/item_list.py game/scaled_window.py`
+- ✅ dummy SDL smoke：模拟滚轮、鼠标拖动列表、触摸拖动列表、拖动右侧滚动条，均能改变 `scroll_offset`
+- ⏳ Windows 端 build.bat + 真实触摸屏实测待用户确认
 
 ---
 

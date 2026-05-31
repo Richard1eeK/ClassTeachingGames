@@ -25,7 +25,9 @@ def main() -> None:
     pygame.init()
     pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP,
                               pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP,
-                              pygame.MOUSEMOTION, pygame.VIDEORESIZE])
+                              pygame.MOUSEMOTION, pygame.MOUSEWHEEL,
+                              pygame.FINGERDOWN, pygame.FINGERUP,
+                              pygame.FINGERMOTION, pygame.VIDEORESIZE])
     pygame.display.set_caption("Shell Cup Game")
     set_window_icon()
     window = ScaledWindow()

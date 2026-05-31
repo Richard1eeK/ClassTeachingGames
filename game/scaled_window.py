@@ -37,6 +37,14 @@ class ScaledWindow:
             data = event.dict.copy()
             data["pos"] = self.to_logical_pos(event.pos)
             return pygame.event.Event(event.type, data)
+
+        finger_events = (pygame.FINGERDOWN, pygame.FINGERUP, pygame.FINGERMOTION)
+        if event.type in finger_events and hasattr(event, "x") and hasattr(event, "y"):
+            win_w, win_h = self.window.get_size()
+            data = event.dict.copy()
+            data["pos"] = self.to_logical_pos((int(event.x * win_w), int(event.y * win_h)))
+            return pygame.event.Event(event.type, data)
+
         return event
 
     def get_mouse_pos(self) -> Tuple[int, int]:

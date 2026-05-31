@@ -32,7 +32,7 @@ SPEED_ICONS = [
 
 
 # Version + author shown bottom-right of the main screen
-APP_VERSION = "v3.4.1"
+APP_VERSION = "v3.5"
 APP_AUTHOR = "by RichardLi"
 
 
@@ -222,9 +222,6 @@ class SettingsScreen:
                     })
                     self.text_input.text = ""
 
-                if event.type == pygame.MOUSEWHEEL:
-                    self.item_list.handle_scroll(event, 320)
-
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos
                     if self.import_text_btn.is_clicked(pos, True):
@@ -233,9 +230,9 @@ class SettingsScreen:
                     if self.add_image_btn.is_clicked(pos, True):
                         self._import_image_folder()
                         continue
-                    # delete buttons in items list
-                    if self.item_list.handle_delete_click(pos):
-                        continue
+
+                if self.item_list.handle_event(event, self._get_item_list_rect()):
+                    continue
 
             # Always-active controls (Start, Help)
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -395,14 +392,7 @@ class SettingsScreen:
             self.import_text_btn.draw(self.screen)
             self.add_image_btn.draw(self.screen)
 
-            # Draw items list (shifted down by 50 to make room for Tab)
-            list_rect = pygame.Rect(
-                self.right_card.rect.x + 26,
-                self.right_card.rect.y + 180,
-                self.right_card.rect.width - 52,
-                self.right_card.rect.bottom - 24 - (self.right_card.rect.y + 180)
-            )
-            self.item_list.draw(self.screen, list_rect)
+            self.item_list.draw(self.screen, self._get_item_list_rect())
 
         self.start_btn.draw(self.screen)
         self.help_modal.draw_entry_button(self.screen)
@@ -422,6 +412,15 @@ class SettingsScreen:
 
         if self.help_modal.open:
             self.help_modal.draw_modal(self.screen)
+
+    def _get_item_list_rect(self):
+        list_top = self.right_card.rect.y + 180
+        return pygame.Rect(
+            self.right_card.rect.x + 26,
+            list_top,
+            self.right_card.rect.width - 52,
+            self.right_card.rect.bottom - 24 - list_top,
+        )
 
     def _draw_credits(self):
         """Draw version + author in the bottom-right corner."""
