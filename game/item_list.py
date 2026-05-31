@@ -9,8 +9,8 @@ from game.icons import draw_image_icon, draw_text_icon, draw_trash
 class ItemList:
     ITEM_ROW_HEIGHT = 38
     SCROLL_STEP = 30
-    SCROLLBAR_W = 12
-    SCROLLBAR_TOUCH_W = 28
+    SCROLLBAR_W = 16
+    SCROLLBAR_TOUCH_W = 34
 
     def __init__(self, items: Optional[List[Dict[str, Any]]] = None) -> None:
         self.items: List[Dict[str, Any]] = items if items is not None else []
@@ -52,14 +52,15 @@ class ItemList:
         if self._is_press(event):
             if pos is None:
                 return False
-            if self._can_scroll(list_rect) and self._scrollbar_hit_rect(list_rect).collidepoint(pos):
-                thumb = self._thumb_rect(list_rect)
-                if thumb.collidepoint(pos):
-                    self._drag_thumb_offset = pos[1] - thumb.y
-                else:
-                    self._drag_thumb_offset = thumb.height // 2
-                    self._set_scroll_from_thumb_top(pos[1] - self._drag_thumb_offset, list_rect)
-                self._dragging_scrollbar = True
+            if self._scrollbar_hit_rect(list_rect).collidepoint(pos):
+                if self._can_scroll(list_rect):
+                    thumb = self._thumb_rect(list_rect)
+                    if thumb.collidepoint(pos):
+                        self._drag_thumb_offset = pos[1] - thumb.y
+                    else:
+                        self._drag_thumb_offset = thumb.height // 2
+                        self._set_scroll_from_thumb_top(pos[1] - self._drag_thumb_offset, list_rect)
+                    self._dragging_scrollbar = True
                 return True
             if list_rect.collidepoint(pos):
                 self._dragging_content = True
@@ -116,8 +117,7 @@ class ItemList:
         list_bottom = list_rect.bottom
         list_left = list_rect.x
         list_right = list_rect.right
-        scrollable = self._can_scroll(list_rect)
-        content_right = list_right - (self.SCROLLBAR_TOUCH_W + 4 if scrollable else 0)
+        content_right = list_right - self.SCROLLBAR_TOUCH_W - 6
 
         clip_rect = pygame.Rect(list_left, list_top,
                                 list_right - list_left, list_bottom - list_top)
@@ -176,17 +176,16 @@ class ItemList:
 
         screen.set_clip(prev_clip)
 
-        if scrollable:
-            self._draw_scrollbar(screen, list_rect)
-            count_text = render_text_outlined(
-                f"{len(self.items)} items",
-                T.FONT_CAPTION, T.TEXT_MUTED,
-                outline_color=T.PARCHMENT, outline_w=1, bold=False,
-            )
-            screen.blit(
-                count_text,
-                (list_left + 4, list_bottom - count_text.get_height() - 2),
-            )
+        self._draw_scrollbar(screen, list_rect)
+        count_text = render_text_outlined(
+            f"{len(self.items)} items",
+            T.FONT_CAPTION, T.TEXT_MUTED,
+            outline_color=T.PARCHMENT, outline_w=1, bold=False,
+        )
+        screen.blit(
+            count_text,
+            (list_left + 4, list_bottom - count_text.get_height() - 2),
+        )
 
     def _event_pos(self, event: pygame.event.Event) -> Optional[Tuple[int, int]]:
         return getattr(event, "pos", None)
@@ -238,7 +237,7 @@ class ItemList:
         return True
 
     def _track_rect(self, list_rect: pygame.Rect) -> pygame.Rect:
-        return pygame.Rect(list_rect.right - 18, list_rect.y + 4,
+        return pygame.Rect(list_rect.right - 25, list_rect.y + 4,
                            self.SCROLLBAR_W, max(1, list_rect.height - 8))
 
     def _scrollbar_hit_rect(self, list_rect: pygame.Rect) -> pygame.Rect:
@@ -269,9 +268,19 @@ class ItemList:
     def _draw_scrollbar(self, screen: pygame.Surface, list_rect: pygame.Rect) -> None:
         track = self._track_rect(list_rect)
         thumb = self._thumb_rect(list_rect)
-        pygame.draw.rect(screen, T.PARCHMENT_SHADOW, track)
-        pygame.draw.rect(screen, T.WOOD_DARK, track, 1)
-        thumb_color = T.GOLD if self._dragging_scrollbar else T.WOOD_BROWN
-        pygame.draw.rect(screen, T.WOOD_DARK, thumb.inflate(4, 0))
+        hit_rect = self._scrollbar_hit_rect(list_rect)
+        pygame.draw.rect(screen, T.WOOD_DARK, hit_rect)
+        pygame.draw.rect(screen, T.PARCHMENT_SHADOW, hit_rect.inflate(-4, -4))
+        pygame.draw.rect(screen, T.WOOD_BROWN, track)
+        pygame.draw.rect(screen, T.WOOD_DARK, track, 2)
+        thumb_color = T.GOLD if self._can_scroll(list_rect) else T.GOLD_LIGHT
+        if self._dragging_scrollbar:
+            thumb_color = T.GOLD_DARK
+        pygame.draw.rect(screen, T.WOOD_DARK, thumb.inflate(4, 2))
         pygame.draw.rect(screen, thumb_color, thumb)
         pygame.draw.rect(screen, T.GOLD_LIGHT, thumb.inflate(-4, -4))
+        grip_y = thumb.centery
+        for dy in (-6, 0, 6):
+            pygame.draw.line(screen, T.WOOD_DARK,
+                             (thumb.x + 4, grip_y + dy),
+                             (thumb.right - 5, grip_y + dy), 2)

@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-**最新 tag**：`v3.5` — Manually Type-in 词汇列表触摸滚动修复
+**最新 tag**：`v3.5.1` — Manually Type-in 常驻触摸滚动条可见性修复
 
 **素材库基准版本（无素材库）**：`v2.4`
 
@@ -122,11 +122,11 @@
 
 ## 当前项目状态
 
-- **代码版本**：`main` 位于 v3.5，素材库和课堂交互打磨基本完成
+- **代码版本**：`main` 位于 v3.5.1，素材库和课堂交互打磨基本完成
 - **素材库**：Bright Spark 284 张闪卡（33/37 类有内容）+ High Flyer 1,233 张图片 + 42 个词库文件
 - **macOS 验证**：全天所有改动通过 py_compile + smoke test
-- **Windows 验证**：用户下次 `git pull` + `build.bat` 需重点确认 Manually Type-in 导入大量词汇后可用触摸拖动列表和右侧滚动条
-- **版本号**：v3.5 显示于主界面右下角
+- **Windows 验证**：用户下次 `git pull` + `build.bat` 需重点确认 Manually Type-in 右侧常驻触摸条清晰可见，导入大量词汇后可拖动滚动
+- **版本号**：v3.5.1 显示于主界面右下角
 
 ## 未完成 / 待确认
 
@@ -147,7 +147,7 @@
 
 ## 下次继续从这里开始
 
-**主线**：Windows 端 build.bat 实测 v3.5，确认 Manually Type-in 导入大量词汇后触摸拖动列表、右侧常驻滚动条拖动、删除按钮点击均正常。
+**主线**：Windows 端 build.bat 实测 v3.5.1，确认 Manually Type-in 右侧常驻触摸条不导入也可见，导入大量词汇后可拖动滚动，删除按钮点击正常。
 
 **后续候选方向**：
 1. Animal Parts / Days / Jobs & Responsibilities / Shapes 四类 BS 闪卡补充
@@ -159,6 +159,7 @@
 ## 版本回滚速查
 
 ```bash
+git reset --hard v3.5.1        # Manually Type-in 常驻触摸滚动条可见性修复
 git reset --hard v3.5          # Manually Type-in 词汇列表触摸滚动修复
 git reset --hard v2.2          # 自由拖拽窗口缩放
 git reset --hard v2.1          # 双语帮助说明
